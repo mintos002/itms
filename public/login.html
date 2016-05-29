@@ -1,0 +1,56 @@
+<div ng-include="'navbar.html'"></div>
+
+<div class="container">
+  <div class="col-md-6 col-md-offset-3">
+    <h2>Login</h2>
+    <!-- Alerts -->
+    <div class="alert alert-danger" ng-show="showAlertError"> {{ showAlertError }}</div>
+    <div class="alert alert-success" ng-show="showAlertSuccess">You have succesfully logged in!</div>
+
+    <form name="login_form" novalidate>
+      <div class="form-group" ng-class="{'has-error': showAlertError && login_form.email.$error.required}">
+        <label for="email">Email</label>
+        <input type="email" name="email" id="email" class="form-control" ng-model="login.email" value="" required />
+        
+      </div>
+      <div class="form-group" ng-class="{'has-error': showAlertError && login_form.password.$error.required}">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" class="form-control" ng-model="login.password" value="" required />
+        
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" ng-click="logUser(login)">Login</button>
+        <img src="img/257.gif" ng-show="loadingGif">
+        <a href="#/signup" class="btn btn-link">Signup</a>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+
+<!--
+<div class="container">
+  <div class="col-md-6 col-md-offset-3">
+    <h2>Login</h2>
+    <form name="form" ng-submit="login()" role="form">
+      <div class="form-group" ng-class="{ 'has-error': form.email.$dirty && form.email.$error.required }">
+        <label for="email">Email</label>
+        <input type="email" name="email" id="email" class="form-control" ng-model="vm.email" required />
+        <span ng-show="form.email.$dirty && form.email.$error.required" class="help-block">Email is required</span>
+      </div>
+      <div class="form-group" ng-class="{ 'has-error': form.password.$dirty && form.password.$error.required }">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" class="form-control" ng-model="vm.password" required />
+        <span ng-show="form.password.$dirty && form.password.$error.required" class="help-block">Password is required</span>
+      </div>
+      <div class="form-actions">
+        <button type="submit" ng-disabled="form.$invalid || vm.dataLoading" class="btn btn-primary" >Login</button>
+        <a href="#/signup" class="btn btn-link">Signup</a>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+-->

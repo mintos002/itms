@@ -1,0 +1,30 @@
+<div ng-include="'navbar.html'"></div>
+
+<div class="container" ng-show="showSearch === true">
+
+<!-- Real Estate Listings -->
+<div class="container">
+  <div class="col-xs-12 col-sm-6 col-md-4" ng-repeat="item in items | itemsFilter:priceInfo | orderBy: '-id'">
+	  <div class="thumbnail">
+      <img ng-src="img/{{item.image}}.jpg" alt="" >
+      <div class="caption">
+        <!-- Conditionally hiden -->
+        <div ng-hide="showDetails === true">
+            <h4> {{item.title}}   </h4>
+
+        </div>
+
+        <button class="btn btn-sm btn-success"
+                ng-hide="showDetails === true"
+                ng-click="showDetails = !showDetails">
+                Details
+        </button>
+
+        <div class="details" ng-show="showDetails === true">
+            <p>{{item.description}}</p>
+        </div>
+
+      </div>
+	  </div>
+  </div>
+</div>

@@ -1,0 +1,51 @@
+<div ng-include="'navbar.html'"></div>
+
+<div class="container">
+	<div class="col-md-6 col-md-offset-3">
+    <!-- Alerts -->
+    <div class="alert alert-danger" ng-show="showAlertError"> {{ showAlertError }}</div>
+    <div class="alert alert-success" ng-show="showAlertSuccess">Your password have changed!</div>
+
+    <h2>My info</h2>
+    
+    <div >
+      <p><label for="name">First name: </label> {{ firstName }}</p> 
+      <p><label for="name">Last name: </label> {{ lastName }}</p>
+      <p><label for="email">Email: <a href="mailto:{{email}}"> {{ email }}</a></label></p>
+    </div>
+
+    <div>
+      <div class="alert alert-danger" ng-show="showDA">
+        <p>To delete your account, tipe the delete code and push the delete account button again.</p>
+        <p><label>Delete code: </label> {{ deleteCode }}</p>
+        <input class="form-control" type="number" name="dcode" id="dcode" placeholder="Insert the delete code." ng-model="dcode">
+      </div>
+
+      <button class="btn btn-danger" ng-click="deleteAccount()">Delete account</button>
+      <button class="btn btn-warning" ng-click="noDeleteAccount()" ng-show="showDA">Cancel</button>
+    </div>
+
+    <h2>Change password</h2>
+    <form name="pw_form" novalidate>
+      <div class="form-group" ng-class="{'has-error': (showAlertError && pw_form.password.$error.required) || pw_form.password.$error.minlength}">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" class="form-control" ng-model="psws.password" value="" ng-minlength="6" placeholder="At least six characters required." required />
+      </div>
+      <div class="form-group" ng-class="{'has-error': (showAlertError && pw_form.npassword.$error.required) || pw_form.npassword.$error.minlength}">
+        <label for="npassword">New password</label>
+        <input type="password" name="npassword" id="npassword" class="form-control" ng-model="psws.npassword" value="" ng-minlength="6" placeholder="At least six characters required." required />
+      </div>
+      <div class="form-group" ng-class="{'has-error': (showAlertError && pw_form.rnpassword.$error.required) || pw_form.rnpassword.$error.minlength}">
+        <label for="rnpassword">Repeat new password</label>
+        <input type="password" name="rnpassword" id="rnpassword" class="form-control" ng-model="psws.rnpassword" value="" ng-minlength="6" placeholder="At least six characters required." required />
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" ng-click="changePassword(psws)">Change password</button>
+        <img src="img/257.gif" ng-show="loadingGif">
+        
+        <button type="button" class="btn btn-warning" ng-click="clearForm()">Clear form</button>
+      </div>
+    </form>
+  </div>
+</div>

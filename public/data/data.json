@@ -1,0 +1,55 @@
+﻿[
+  {
+    "id": 1,
+    "type": "Electronics",
+    "price": 3500,
+    "title": "Razer Blade 17",
+    "description": "Best gaming notebook of 2015.",
+    "image": "img-1"
+  },
+
+  {
+    "id":  2,
+    "type": "Books",
+    "price": 10.50,
+    "title": "Came of thrones",
+    "description": "One of the best books ever writed.",
+    "image": "img-2"
+  },
+
+  {
+    "id": 3,
+    "type": "Home, Garden. Pets & DIY",
+    "price": 25,
+    "title": "Painting",
+    "description": "Painted in Italy.",
+    "image": "img-3"
+  },
+
+    {
+    "id": 4,
+    "type": "Gaming",
+    "price": 150,
+    "title": "PSVita",
+    "description": "Sony's PlayStation Vita retains the familiar general form of the PlayStation Portable hardware series while dramatically improving on virtually every aspect of its use with powerful and exciting new features including: dual touch pads at the front and rear, dual cameras at the front and rear, dual analogue sticks, a 5-inch OLED screen, six-axis motion sensors and a three-axis electronic compass and exceptional built-in connectivity via Wi-Fi*. Taken together this makes for a handheld gaming device that truly signals the entry of handhelds into the world of Next-Gen gaming.",
+    "image": "img-4"
+  },
+
+  {
+    "id":  5,
+    "type": "Sports & Outdoors",
+    "price": 10,
+    "title": "Skate T-shirt",
+    "description": "Cool braille skateboarding T-shirt.",
+    "image": "img-5"
+  },
+
+  {
+    "id": 6,
+    "type": "Gaming",
+    "price": 60,
+    "title": "Razer Mamba Tournament Edition ",
+    "description": " The Razer Mamba Tournament Edition is designed for eSports athletes who demand the very best performance. Engineered with the world’s most precise 16,000 DPI gaming mouse sensor, capable of tracking up to 1 DPI increments and a lift-off cut-off distance as precise as 0.1 mm, the Razer Mamba Tournament Edition gaming mouse perfectly translates every mouse movement with incredible pinpoint accuracy, helping you make effortlessly precise headshots. Further customize the Razer Mamba Tournament Edition using the Razer Chroma lighting with true 16.8 million customisable colour options and create a mouse unlike any other. Explore absolute control and performance as you take your gaming experience to the competitive level with the Razer Mamba Tournament Edition. ",
+    "image": "img-6"
+  }
+]

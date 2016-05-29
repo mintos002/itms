@@ -1,0 +1,9 @@
+MSYS-1.0.12 Build:2012-07-05 14:56
+Exception: STATUS_ACCESS_VIOLATION at eip=0041419A
+eax=FFFFFFFF ebx=0041C178 ecx=FFFFFFFF edx=680A4C5C esi=0000001A edi=004010CB
+ebp=0062FD84 esp=0062FD8C program=C:\Program Files (x86)\Git\bin\less.exe
+cs=0023 ds=002B es=002B fs=0053 gs=002B ss=002B
+Stack trace:
+Frame     Function  Args
+0062FD84  0041419A  (0041C178, 00000000, 0062FDB4, 004147B9)
+End of stack trace

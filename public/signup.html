@@ -1,0 +1,44 @@
+<div ng-include="'navbar.html'"></div>
+
+<div class="container">
+	<div class="col-md-6 col-md-offset-3">
+    <h2>Register</h2>
+    <!-- Alerts -->
+    <div class="alert alert-danger" ng-show="showAlertError"> {{ showAlertError }}</div>
+    <div class="alert alert-success" ng-show="showAlertSuccess">You have succesfully registered! LogIn now and share!</div>
+
+    <form name="reg_form" novalidate>
+      <div class="form-group" ng-class="{'has-error': showAlertError && reg_form.firstName.$error.required}">
+        <label for="name">First name</label>
+        <input type="text" name="firstName" id="firstName" class="form-control" ng-model="add_user.firstName" value="" required />
+        
+      </div>
+      <div class="form-group" ng-class="{'has-error': showAlertError && reg_form.lastName.$error.required}">
+        <label for="name">Last name</label>
+        <input type="text" name="lastName" id="Text1" class="form-control" ng-model="add_user.lastName" value="" required />
+        
+      </div>
+      <div class="form-group" ng-class="{'has-error': showAlertError && reg_form.email.$error.required}">
+        <label for="email">Email</label>
+        <input type="email" name="email" id="email" class="form-control" ng-model="add_user.email" value="" required />
+        
+      </div>
+      <div class="form-group" ng-class="{'has-error': (showAlertError && reg_form.password.$error.required) || reg_form.password.$error.minlength}">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" class="form-control" ng-model="add_user.password" value="" ng-minlength="6" placeholder="At least six characters required." required />
+        
+      </div>
+      <div class="form-group" ng-class="{'has-error': (showAlertError && reg_form.rpassword.$error.required) || reg_form.rpassword.$error.minlength}">
+        <label for="password">Repeat password</label>
+        <input type="password" name="rpassword" id="rpassword" class="form-control" ng-model="add_user.rpassword" value="" ng-minlength="6" placeholder="At least six characters required." required />
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" ng-click="addUser(add_user)">Register</button>
+        <img src="img/257.gif" ng-show="loadingGif">
+        
+        <a href="#/login" class="btn btn-link">Login</a>
+      </div>
+    </form>
+  </div>
+</div>

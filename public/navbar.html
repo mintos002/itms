@@ -1,0 +1,43 @@
+<!-- HEADER AND NAVBAR --> 
+  <header>
+    <div>
+      <nav class="navbar navbar-default">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <!-- Hide the nav bar with a buton when there is a small lyout -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#/"><img src="img/item_3.png" alt="Item"></a>
+          </div>
+          <div class="collapse navbar-collapse" id="myNavbar">
+            <ul class="nav navbar-nav">
+              <li class="active" ng-click="showSearch = !showSearch"><a href="#/"> Search</a></li>
+            </ul>
+            <div ng-controller="NavbarController">
+              <ul class="nav navbar-nav navbar-right" ng-hide="navbarLogged" >
+                <li><a href="#/signup"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+                <li><a href="#/login"><span class="glyphicon glyphicon-log-in"></span> LogIn</a></li>
+              </ul>
+              <ul class="nav navbar-nav navbar-right" ng-show="navbarLogged">
+                <li class="dropdown">
+                  <a class="dropdown-toggle" data-toggle="dropdown" href="#/">Hello {{ nav_user_name }}!
+                  <span class="caret"></span></a>
+                  <ul class="dropdown-menu" >
+                    <li><a href="#/profile">My items</a></li>
+                    <li><a href="#/">Liked items</a></li>
+                    <li role="separator" class="divider"></li>
+                    <li><a href="#/account">Account</a></li> 
+                  </ul>
+                </li>
+
+                <li><a href="#" ng-controller="LogoutController" ng-click="logout()"><span class="glyphicon glyphicon-log-out"></span> LogOut</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </header>
