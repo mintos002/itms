@@ -2,6 +2,9 @@
 
 <div class="container">
 	<div class="col-md-6 col-md-offset-3">
+    <h2>What is Item?</h2>
+    <p>Item is a site where you can buy or sale second hand things. As soon as you register, you can search items and get the email address of the owner to talk about the conditions.</p>
+    
     <h2>Register</h2>
     <!-- Alerts -->
     <div class="alert alert-danger" ng-show="showAlertError"> {{ showAlertError }}</div>
@@ -11,7 +14,7 @@
       <div class="form-group" ng-class="{'has-error': showAlertError && reg_form.firstName.$error.required}">
         <label for="name">First name</label>
         <input type="text" name="firstName" id="firstName" class="form-control" ng-model="add_user.firstName" value="" required />
-        
+       
       </div>
       <div class="form-group" ng-class="{'has-error': showAlertError && reg_form.lastName.$error.required}">
         <label for="name">Last name</label>

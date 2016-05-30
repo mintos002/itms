@@ -501,13 +501,21 @@ app.get("/user/:token", function(req,res){
  *    GET: finds all contacts
  *    POST: creates a new contact
  */
-app.get("/items", function(req, res) {
+app.get("/items/all", function(req, res) {
   mongoFind(res, ALLITEMS_COLLECTION, {}, function(err, docs) {
     if (err) {
       handleError(res, err.message, "Failed to get items");
-    } else {
-      res.status(200).json(docs);
       res.end();
+      return;
+    } else {
+      if (docs[0] == null || docs[0] === undefined){
+        handleError(res, "ERROR No items found", "No items found.");
+        res.end();
+        return;
+      }
+      res.status(200).json({"success": true, "message": "Items found.", "data": docs});
+      res.end();
+      console.log(docs)
     }
   });
 });

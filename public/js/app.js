@@ -40,14 +40,15 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
   // SERVICES
   //---------------------------------
 
-  .service("Items", function($http, $location) {
+  .service("Items", function($http, $location, $anchorScroll) {
     // function to get Items
-    this.getItems = function() {
-      return $http.get("/items").
+    this.getItems = function(callback) {
+      return $http.get("/items/all").
         then(function(response) {
-            return response;
-        }, function(response) {
-            alert("Error finding items.");
+            callback(true, response.message, response.data.data);
+        }, 
+        function(response) {
+          callback(false, response.message, null);
         });
     }
 
@@ -143,6 +144,13 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
       return code;
     }
 
+    this.scrollTo = function(id){
+      // set the location.hash to the id of the element
+      $location.hash(id)
+      //call anchorScroll()
+      $anchorScroll();
+    }
+
     this.getUserByEmail = function(vm, callback) {
       $http.get('/user')
     };
@@ -221,32 +229,64 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
       $scope.navbarLogged = false;
       return;
     }
+    $scope.navbarLogged = true;
+    $scope.nav_user_name = firstName;
 
-    Items.isLoggedIn(function(success, message, data){
-      if(!success){
-        console.log("NO ONLINE " + message);
-        $scope.navbarLogged = false;
+    // Items.isLoggedIn(function(success, message, data){
+    //   if(!success){
+    //     console.log("NO ONLINE " + message);
+    //     $scope.navbarLogged = false;
 
-      } else {
-        console.log("YES ONLINE " + message);
-        $scope.navbarLogged = true;
-        $scope.nav_user_name = firstName;
-      }
-    });
+    //   } else {
+    //     console.log("YES ONLINE " + message);
+    //     $scope.navbarLogged = true;
+    //     $scope.nav_user_name = firstName;
+    //   }
+    // });
 
 
   })
 
   // homeControler
-  .controller('HomeController', function ($scope, itemsFactory) {
+  .controller('HomeController', function ($scope, Items) {
     console.log("HomeController");
-    // iniciate items
-
+    //check if the user is logged in to show logged privileges
+    Items.isLoggedIn(function(success, message, data){
+      if(!success){
+        console.log("HomeController no token.");
+        $scope.loggedIn = false;
+        return;
+      } else {
+        $scope.loggedIn = true;
+      }
+    });
+    // init items array
+    $scope.items;
+    // init alerts
+    $scope.showAlertError = "";
+    $scope.showAlertSuccess = "";
+    
     // initial min max values for filter price
     $scope.priceInfo = {
         min: 0,
         max: 1000000
     };
+
+    // show the owner email if is clicked
+    $scope.showOwner = function(){
+      return true;
+    }
+
+    Items.getItems(function(success, message, data){
+      if(!success) {
+        // show alert error
+        $scope.showAlertError = message;
+        $scope.showAlertSuccess = "";
+      } else {
+        $scope.items = data;
+
+      }
+    });
       
   })
 
@@ -587,6 +627,8 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
           // open the form in the home.html
           $scope.editListing = true;
           $scope.existingListing = item;
+          
+          Items.scrollTo("edit_item");
         }
 
         // Save item edit
@@ -609,6 +651,7 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
         itemsFactory.getItems().success(function (data) {
           // if it success:
           $scope.items = data;
+          console.log(data)
         }).error(function (error) {
           // if there is an error
           console.log("ERROR in HomeController");

@@ -17,5 +17,12 @@ body {
 }
 
 .listing-form h3 {
-	color: white;
+	
+}
+.listing-form-input {
+	padding: 5px;
+}
+
+.listing-button {
+	margin-bottom: 10px;
 }

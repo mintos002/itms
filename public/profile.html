@@ -47,54 +47,142 @@
 <!-- Add data -->
 <div class="container">
     <button
-        class="btn btn-primary"
+        class="btn btn-primary listing-button"
         ng-click="addListing = !addListing"
         ng-show="!addListing">Add Listing
     </button>
 
     <button
-        class="btn btn-danger"
+        class="btn btn-danger listing-button"
         ng-click="addListing = !addListing"
         ng-show="addListing">Close
     </button>
 
-        <div class="listing-form" ng-if="addListing">
-        
-            <h3>Add an Item</h3>
+    <div class="listing-form" ng-if="addListing">
+    
+        <h3>Add an Item</h3>
+        <div class="col-sm-6">
+            <div class="thumbnail">
+                <img ng-src="img/default-img.jpg" alt="Inser a picture" height="50">
 
-            <div class="row listing-form-row">
-                <div class="col-sm-4">
-                    <div class="input-group">
-                        <span class="input-group-addon">Item</span>
-                        <input
-                            type="text"
-                            placeholder="Enter the item name"
-                            class="form-control"
-                            ng-model="newListing.title">
+                <div class="caption">
+                    <div class="listing-form-input">
+                        <div class="row listing-form-row">
+                            <div class="input-group ">
+                                <span class="input-group-addon">Price</span>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="Enter the price"
+                                    class="form-control"
+                                    ng-model="newListing.price">
+                            </div>
+                        </div>
+
+                        <div class="row listing-form-row">
+                            <div class="input-group">
+                                <span class="input-group-addon">Item</span>
+                                <input
+                                    type="text"
+                                    placeholder="Enter the item name"
+                                    class="form-control"
+                                    ng-model="newListing.title">
+                            </div>
+                        </div>
+
+                        <div class="row listing-form-row">
+                            <div class="input-group">
+                                <span class="input-group-addon">Department</span>
+                                <select
+                                    type="select"
+                                    name="propertyType"
+                                    id="propertyType"
+                                    class="form-control"
+                                    ng-model="newListing.type">
+                                        <option value="" disabled selected>Select an option</option>
+                                        <option value="Books & Audible">Books & Audible</option>
+                                        <option value="Movies, TV, Music & Games">Movies, TV, Music & Games</option>
+                                        <option value="Electronics & Computers">Electronics & Computers</option>
+                                        <option value="Home, Garden Pets & DIY">Home, Garden Pets & DIY</option>
+                                        <option value="Toys, Children & Baby">Toys, Children & Baby</option>
+                                        <option value="Clothes, Shoes & Jewellery">Clothes, Shoes & Jewellery</option>
+                                        <option value="Sports & Outdoors">Sports & Outdoors</option>
+                                        <option value="Beauty, Health & Grocery">Beauty, Health & Grocery</option>
+                                        <option value="Car & Motorbike">Car & Motorbike</option>
+                                        <option value="Business, Industry & Science">Business, Industry & Science</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row listing-form-row">
+                            <div >
+                                <div class="input-group">
+                                    <span class="input-group-addon">Description</span>
+                                    <textarea
+                                        type="text"
+                                        placeholder="Enter a description"
+                                        class="form-control"
+                                        ng-model="newListing.description">
+                                    </textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            class="btn btn-primary listing-button"
+                            ng-click="addItem(newListing)"
+                            ng-show="addListing">Add
+                        </button>
+
+                        <pre>{{newListing | json}}</pre>
                     </div>
                 </div>
+            </div>
+        </div> 
+    </div>
+</div>
 
-                <div class="col-sm-4">
-                    <div class="input-group">
+<!-- Edit data -->
+<div class="container" id="edit_item">
+    <div class="listing-form" ng-if="editListing">
+    
+        <h3>Edit Item</h3>
+        <div class="thumbnail col-sm-6">
+            <img ng-src="img/{{existingListing.image}}.jpg" alt="Edit the image">
+            <div class="caption">
+                <div class="row listing-form-row">
+                    <div class="input-group listing-form-input">
                         <span class="input-group-addon">Price</span>
                         <input
                             type="number"
                             step="0.01"
                             placeholder="Enter the price"
                             class="form-control"
-                            ng-model="newListing.price">
+                            ng-model="existingListing.price">
                     </div>
                 </div>
 
-                <div class="col-sm-4">
-                    <div class="input-group">
+                <div class="row listing-form-row">
+                    <div class="input-group listing-form-input">
+                        <span class="input-group-addon">Item</span>
+                        <input
+                            type="text"
+                            placeholder="Enter the item name"
+                            class="form-control"
+                            ng-model="existingListing.title">
+                    </div>
+                </div>
+
+                <div class="row listing-form-row">
+                    <div class="input-group listing-form-input">
                         <span class="input-group-addon">Department</span>
                         <select
                             type="select"
                             name="propertyType"
                             id="propertyType"
                             class="form-control"
-                            ng-model="newListing.type">
+                            ng-model="existingListing.type">
+                                <option value="" disabled>Select an option</option>
                                 <option value="Books & Audible">Books & Audible</option>
                                 <option value="Movies, TV, Music & Games">Movies, TV, Music & Games</option>
                                 <option value="Electronics & Computers">Electronics & Computers</option>
@@ -108,17 +196,17 @@
                         </select>
                     </div>
                 </div>
-            </div>
+            
 
-            <div class="row listing-form-row">
-                <div class="col-sm-4">
-                    <div class="input-group">
+            
+                <div class="row listing-form-row">
+                    <div class="input-group listing-form-input">
                         <span class="input-group-addon">Description</span>
                         <textarea
                             type="text"
                             placeholder="Enter a description"
                             class="form-control"
-                            ng-model="newListing.description">
+                            ng-model="existingListing.description">
                         </textarea>
                     </div>
                 </div>
@@ -126,94 +214,16 @@
 
             <button
                 class="btn btn-primary listing-button"
-                ng-click="addItem(newListing)"
-                ng-show="addListing">Add
+                ng-click="saveItemEdit()"
+                ng-show="editListing">Save
             </button>
 
-            <pre>{{newListing | json}}</pre>
+            <button
+                class="btn btn-danger listing-button"
+                ng-click="deleteItem(existingListing)"
+                ng-show="editListing">Delete
+            </button>
         </div>
-</div>
-
-<!-- Edit data -->
-<div class="container">
-    <div class="listing-form" ng-if="editListing">
-    
-        <h3>Edit Item</h3>
-
-        <div class="row listing-form-row">
-            <div class="col-sm-4">
-                <div class="input-group">
-                    <span class="input-group-addon">Item</span>
-                    <input
-                        type="text"
-                        placeholder="Enter the item name"
-                        class="form-control"
-                        ng-model="existingListing.title">
-                </div>
-            </div>
-
-            <div class="col-sm-4">
-                <div class="input-group">
-                    <span class="input-group-addon">Price</span>
-                    <input
-                        type="number"
-                        step="0.01"
-                        placeholder="Enter the price"
-                        class="form-control"
-                        ng-model="existingListing.price">
-                </div>
-            </div>
-
-            <div class="col-sm-4">
-                <div class="input-group">
-                    <span class="input-group-addon">Department</span>
-                    <select
-                        type="select"
-                        name="propertyType"
-                        id="propertyType"
-                        class="form-control"
-                        ng-model="existingListing.type">
-                            <option value="Books & Audible">Books & Audible</option>
-                            <option value="Movies, TV, Music & Games">Movies, TV, Music & Games</option>
-                            <option value="Electronics & Computers">Electronics & Computers</option>
-                            <option value="Home, Garden Pets & DIY">Home, Garden Pets & DIY</option>
-                            <option value="Toys, Children & Baby">Toys, Children & Baby</option>
-                            <option value="Clothes, Shoes & Jewellery">Clothes, Shoes & Jewellery</option>
-                            <option value="Sports & Outdoors">Sports & Outdoors</option>
-                            <option value="Beauty, Health & Grocery">Beauty, Health & Grocery</option>
-                            <option value="Car & Motorbike">Car & Motorbike</option>
-                            <option value="Business, Industry & Science">Business, Industry & Science</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <div class="row listing-form-row">
-            <div class="col-sm-4">
-                <div class="input-group">
-                    <span class="input-group-addon">Description</span>
-                    <textarea
-                        type="text"
-                        placeholder="Enter a description"
-                        class="form-control"
-                        ng-model="existingListing.description">
-                    </textarea>
-                </div>
-            </div>
-        </div>
-
-        <button
-            class="btn btn-primary listing-button"
-            ng-click="saveItemEdit()"
-            ng-show="editListing">Save
-        </button>
-
-        <button
-            class="btn btn-danger listing-button"
-            ng-click="deleteItem(existingListing)"
-            ng-show="editListing">Delete
-        </button>
-
     </div>
 </div>
 
@@ -242,7 +252,7 @@
 
         <!-- Button for edit -->
         <button
-                    class="btn btn-sm btn-warning"
+            class="btn btn-sm btn-warning"
             ng-hide="showDetails === true"
             ng-click="editItem(item)"> Edit
         </button>
