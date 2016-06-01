@@ -99,6 +99,24 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
       )
     }
 
+    this.deleteItem = function(item_id, callback) {
+      var token = window.localStorage.getItem("token");
+      // check if the data is valid
+      if(token === undefined || !item_id){
+        callback(false, "No data provided.");
+      } else {
+        // if the data is valid call the server
+        $http.delete("/items/delete/" + token +"/" + item_id).then(
+          function(response){
+            callback(true, response.data.message);
+          },
+          function(response){
+            callback(false, response.data.message);
+          }
+        );
+      }
+    }
+
     this.getItem = function(itemId) {
       var url = "/items/" + itemId;
       return $http.get(url).
@@ -647,7 +665,7 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
         // initial min max values for filter price
         $scope.priceInfo = {
           min: 0,
-          max: 1000000
+          max: 10000000000000000000000000000000000000
         };
 
         // Push Items
@@ -750,23 +768,35 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
         // Delete an item
         // taking current listing, find the index, and splice it out
         $scope.deleteItem = function(listing) {
-          var index = $scope.items.indexOf(listing);
-          $scope.items.splice(index, 1);
-          $scope.existingListening = {};
-          $scope.editListing = false;
+          Items.deleteItem(listing._id, function(success, message){
+            if(!success){
+              // if callback returns fail, show the error
+              $scope.showAlertErrorEditItem = message;
+              return;
+            } else {
+              // if it success, clear the form closeit and get the items.
+              $scope.existingListening = {};
+              $scope.editListing = false;
+              getTheItems();
+            }
+          })          
         }
 
         // Get the items from the db
         var token = window.localStorage.getItem("token");
         getTheItems = function(){
+          console.log("getTheItems")
           Items.getItemsByToken(token, function (success, message, data) {
             if(!success){
-              // if there is an error
+              // if there is an error show the error
               console.log(message);
+              $scope.showAlertError = message;
             } 
             else{
               // if it success:
+              console.log(data)
               $scope.items = data;
+              console.log(data);
             }
           }); 
         }

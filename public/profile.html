@@ -43,7 +43,7 @@
           <option value="700">700</option>
           <option value="800">800</option>
           <option value="900">900</option>
-          <option value="1000000">Above 1000</option>
+          <option value="10000000000000000000000000000000000000">Above 1000</option>
         </select>
       </div>
     </div>        
@@ -243,7 +243,7 @@
         <button
           class="btn btn-danger listing-button"
           ng-click="deleteItem(existingListing)"
-          ng-show="editListing">Delete
+          ng-show="editListing">Delete Item
         </button>
       </div>
     </div>
@@ -262,7 +262,7 @@
         <div ng-hide="showDetails === true">
           <h3><i class="glyphicon glyphicon-tag"></i> {{item.price | currency}}</h3>
           <h4> {{item.title}} 
-          <span class="label label-primary label-sm">{{item.type}}</span>
+            <span class="label label-primary label-sm">{{item.type}}</span>
           </h4>
         </div>
 

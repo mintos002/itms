@@ -553,7 +553,7 @@ app.get("/items/:token", function(req, res){
           } else {
             // the docs are empty?
             if(docs[0] == null || docs[0] === undefined){
-              handleError(res, "ERROR emailByToken, no data found allitems", "You are not logged in.", 404);
+              handleError(res, "ERROR emailByToken, no data found allitems", "You have no items. Add an Item and now start selling!", 404);
               res.end();
               return;
             } else {
@@ -620,7 +620,57 @@ app.post("/items/edit", function(req, res){
     res.end();
     return;
   })
-})
+});
+/*  "/items/delete/:token"
+ *    DELETE: delete the contact
+ */
+app.delete("/items/delete/:token/:item_id", function(req, res){
+  var token = req.params.token;
+  var item_id = req.params.item_id;
+  console.log(item_id)
+  console.log(token)
+  if(token === undefined || item_id === undefined || token == {} || item_id == {}){
+    handleError(res, "ERROR /items/delete/:token invalid data", "Unexpected error, please, restart the site and try again.");
+    res.end();
+    return;
+  } else {
+    // search email by token
+    mongoFind(res, UONLINE_COLLECTION, {"token": token}, function(err, doc){
+      if(err){
+        // if error, thorw error
+        handleError(res, err.message, "Unexpected error, please, restart the site and try again.");
+        res.end();
+        return
+      } else {
+        // if success, check if the doc is empty
+        var email = doc[0]._id;
+        if(email === undefined){
+          handleError(res, "ERROR /items/delete/:token not logged in", "You are not logged in.");
+          res.end();
+          return;
+        } else {
+          // if it success:
+          // to make sure that the token send is from the owner of the object:
+          var id = new mongodb.ObjectID(item_id);
+          var data = {"_id": id, "owner": email};
+          data._id = id;
+          console.log(data);
+          mongoRemove(res, ALLITEMS_COLLECTION, data, function(error, result){
+            if(error){
+              handleError(res, error.message, "Unable to remove the item, please, restart the site and try again.");
+              res.end();
+              return;
+            } else {
+              console.log("SUCC");
+              res.status(200).json({"success": true, "message": "Item successfully removed."});
+              res.end();
+            }
+          })
+        }
+      }
+    })
+  }
+});
 
 /*  "/contacts"
  *    GET: finds all contacts
