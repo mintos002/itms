@@ -43,22 +43,60 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
   .service("Items", function($http, $location, $anchorScroll) {
     // function to get Items
     this.getItems = function(callback) {
-      return $http.get("/items/all").
+      $http.get("/items/all").
         then(function(response) {
-            callback(true, response.message, response.data.data);
+            callback(true, response.data.message, response.data.data);
         }, 
         function(response) {
           callback(false, response.message, null);
         });
     }
 
-    this.addItem = function(item) {
-      return $http.post("/items", item).
-        then(function(response) {
-            return response;
-        }, function(response) {
-            console.log("Error creating contact")
-        })
+    this.getItemsByToken = function(token, callback){
+      // check if there is a token
+      var token = token;
+      if(token == null || token === undefined){
+        callback(false, "No token provided", null);
+        return;
+      }
+      // if token is valid
+      $http.get("/items/" + token).then(
+        function(response){
+          callback(true, response.data.message, response.data.data);
+        },
+        function(response){
+          callback(false, response.data.message, null);
+        }
+      );
+    }
+
+    this.addItem = function(item, callback) {
+      if(!item){
+        callback(false, "No item provided.", null)
+        return;
+      }
+      // add the owner to item
+      $http.post("/items", item).then(
+        function(response) {
+          console.log("Success addItem");
+          callback(true, response.data.message, response.data.data);
+        },
+        function(response) {
+          console.log("Error creating contact");
+          callback(false, response.data.message, null);
+        }
+      );
+    }
+
+    this.saveItemEdit = function(item, callback){
+      $http.post("/items/edit", item).then(
+        function(response) {
+          callback(true, response.data.message, response.data.data);
+        },
+        function(response) {
+          callback(false, response.data.message, null);
+        }
+      )
     }
 
     this.getItem = function(itemId) {
@@ -84,7 +122,7 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
         },
         function(response){
           console.log("In getUserByToken");
-          callback(false, response.message, null);
+          callback(false, response.data.message, null);
         }
       );
     }
@@ -113,10 +151,10 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
       console.log("Inside Delete account by token");
       $http.delete('/user/account/delete/' + token).then(
         function(response){
-          callback(true, response.message);
+          callback(true, response.data.message);
         },
         function(response){
-          callback(false, response.message)
+          callback(false, response.data.message)
         }
       );
     }
@@ -271,11 +309,7 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
         min: 0,
         max: 1000000
     };
-
-    // show the owner email if is clicked
-    $scope.showOwner = function(){
-      return true;
-    }
+    
 
     Items.getItems(function(success, message, data){
       if(!success) {
@@ -595,6 +629,7 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
 
   // profileControler
   .controller('ProfileController', function ($scope, $location, itemsFactory, Items) {
+    var EMAIL = "";
     // check if it is logged in
     Items.isLoggedIn(function(success, message, data){
       if(!success){
@@ -603,6 +638,9 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
         return;
       } 
       else {
+        // store the email
+        EMAIL = data.email;
+        console.log(EMAIL);
         // iniciate items
         $scope.items;
 
@@ -617,12 +655,48 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
 
         $scope.addItem = function(newListing) {
           newListing.image = 'default-img';
-          $scope.items.push(newListing);
-          // to clear the form:
-          $scope.newListing = {};
+          newListing.owner = EMAIL;
+          // comprove all the data is in
+          if(newListing == null || newListing === undefined){
+            $scope.showAlertErrorAddItem = "Please, fill the form.";
+            return;
+          } else if(!newListing.price){
+            $scope.showAlertErrorAddItem = "Price missing.";
+            return;
+          } else if(!newListing.title){
+            $scope.showAlertErrorAddItem = "Title missing.";
+            return;
+          } else if(!newListing.type){
+            $scope.showAlertErrorAddItem = "Department missing.";
+            return;
+          } else if(!newListing.description){
+            $scope.showAlertErrorAddItem = "Description missing.";
+            return;
+          } else if(!newListing.owner){
+            $scope.showAlertErrorAddItem = "Unexpected error, please, refresh the site and try again.";
+            return;
+          } else {
+            $scope.showAlertErrorAddItem = "";
+            // add the item to the db
+            Items.addItem(newListing, function(success, message, data){
+              if(!success){
+                $scope.showAlertError = "Unable to add the item, please, refresh the site and try again.";
+                return;
+              } else {
+                // if server return success:
+                //For an instant loading, push the data to the html file
+                //$scope.items.push(newListing);
+                // to clear the form:
+                $scope.newListing = {};
+                // restart the view:
+                getTheItems();
+                
+              }
+            });
+          }
         }
 
-        // Eddit items
+        // Eddit items it copies the item to the edit section
         $scope.editItem = function(item) {
           // open the form in the home.html
           $scope.editListing = true;
@@ -634,8 +708,43 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
         // Save item edit
         $scope.saveItemEdit = function() {
           // void the data in the edit form and close it
-          $scope.existingListing = {};
-          $scope.editListing = false;
+          var existingListing = $scope.existingListing;
+          // comprove all the data is in
+          if(existingListing == null || existingListing === undefined){
+            $scope.showAlertErrorEditItem = "Please, fill the form.";
+            return;
+          } else if(!existingListing.price){
+            $scope.showAlertErrorEditItem = "Price missing.";
+            return;
+          } else if(!existingListing.title){
+            $scope.showAlertErrorEditItem = "Title missing.";
+            return;
+          } else if(!existingListing.type){
+            $scope.showAlertErrorEditItem = "Department missing.";
+            return;
+          } else if(!existingListing.description){
+            $scope.showAlertErrorEditItem = "Description missing.";
+            return;
+          } else if(!existingListing.owner){
+            $scope.showAlertErrorEditItem = "Unable to update the item, please, refresh the site and try again.";
+            return;
+          } else if(!existingListing._id){
+            $scope.showAlertErrorEditItem = "Unable to update the item, please, refresh the site and try again.";
+            return;
+          } else {
+            Items.saveItemEdit(existingListing, function(success, message, data){
+              if(!success){
+                $scope.showAlertErrorEditItem = "Unable to update the item, please, refresh the site and try again.";
+                return;
+              } else {
+                // clear and hide the edit form
+                $scope.existingListing = {};
+                $scope.editListing = false;
+                // get the Items to actualizate
+                getTheItems();
+              }
+            })
+          }
         }
 
         // Delete an item
@@ -647,15 +756,22 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
           $scope.editListing = false;
         }
 
-        // Get the items from itemsFactory
-        itemsFactory.getItems().success(function (data) {
-          // if it success:
-          $scope.items = data;
-          console.log(data)
-        }).error(function (error) {
-          // if there is an error
-          console.log("ERROR in HomeController");
-        });        
+        // Get the items from the db
+        var token = window.localStorage.getItem("token");
+        getTheItems = function(){
+          Items.getItemsByToken(token, function (success, message, data) {
+            if(!success){
+              // if there is an error
+              console.log(message);
+            } 
+            else{
+              // if it success:
+              $scope.items = data;
+            }
+          }); 
+        }
+        // get the items
+        getTheItems();    
       }
     });   
   });

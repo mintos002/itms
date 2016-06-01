@@ -1,8 +1,10 @@
 <div ng-include="'navbar.html'"></div>
 
-<!-- Alerts -->
-<div class="alert alert-danger" ng-show="showAlertError"> {{ showAlertError }}</div>
-<div class="alert alert-success" ng-show="showAlertSuccess">{{showAlertSuccess}}</div>
+<div class="container">
+  <!-- Alerts -->
+  <div class="alert alert-danger" ng-show="showAlertError"> {{ showAlertError }}</div>
+  <div class="alert alert-success" ng-show="showAlertSuccess">{{showAlertSuccess}}</div>
+</div>
 
 <div class="container" ng-show="showSearch === true">
   <!-- search -->
@@ -10,7 +12,7 @@
 
 <!-- Real Estate Listings -->
 <div class="container">
-  <div class="col-xs-12 col-sm-6 col-md-4" ng-repeat="item in items">
+  <div class="col-xs-12 col-sm-6 col-md-4" ng-repeat="item in items | orderBy: '-_id'">
     <div class="thumbnail">
       <img ng-src="img/{{item.image}}.jpg" alt="" >
       <div class="caption">
@@ -32,17 +34,15 @@
 
         <!-- Button to show owner -->
         <button
-          class="btn btn-sm btn-warning"
+          class="btn btn-sm btn-warning btn-like"
           ng-hide="showDetails === true || loggedIn === false"
-          ng-click="showOwner = !showOwner"
-          style="float: right">
+          ng-click="showOwner = !showOwner">
           Show the owner
         </button>
 
-        <div class="listing-form-row" ng-hide="showOwner">
+        <div class="listing-form-row" ng-show="showOwner">
           <label>Owner: <a href="mailto:{{item.owner}}">{{item.owner}}</a></label>
         </div>
-
 
         <button 
           class="btn btn-sm btn-danger"

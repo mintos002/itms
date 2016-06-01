@@ -101,11 +101,10 @@ function mongoRemove(res, coll, data, callback){
 
 function mongoUpdate(res, coll, find, change, callback){
   console.log("In mongoUpdate");
-  db.collection(coll).update(find, {$set: change}, function(err, count, status){
-    callback(err, count, status);
+  db.collection(coll).update(find, {$set: change}, function(err, doc){
+    callback(err, doc);
   });
 }
-
 
 
 // ----------------------------------------------------
@@ -476,7 +475,7 @@ app.get("/user/:token", function(req,res){
                 } // if there is no error set the psw
                 var find = {"_id" : email};
                 var change = {"hash" : hash};
-                mongoUpdate(res, USERS_COLLECTION, find, change, function(err,count,status){
+                mongoUpdate(res, USERS_COLLECTION, find, change, function(err, count){
                   console.log("MongoUpdate");
                   if(err){
                     handleError(res, "DB ERROR: mongoUpdate", "Password not changed, please try again.");
@@ -496,10 +495,9 @@ app.get("/user/:token", function(req,res){
     });
  });
 
-// CONTACTS API ROUTES BELOW
-/*  "/contacts"
- *    GET: finds all contacts
- *    POST: creates a new contact
+// ITEMS API ROUTES BELOW
+/*  "/items/all"
+ *    GET: finds all items
  */
 app.get("/items/all", function(req, res) {
   mongoFind(res, ALLITEMS_COLLECTION, {}, function(err, docs) {
@@ -520,26 +518,109 @@ app.get("/items/all", function(req, res) {
   });
 });
 
+/*  "/items/:token"
+ *    GET: finds items by token
+ */
+app.get("/items/:token", function(req, res){
+  var token = req.params.token;
+  // check if there is a token, if not throw error
+  if(token === undefined || token == null){
+    handleError(res, "ERROR /items/:token no token", "You are not logged in.");
+    res.end();
+    return;
+  }
+  // if the token exists get the email and search the items with this owner
+  var token = {"token": token};
+  mongoFind(res, UONLINE_COLLECTION, token, function(err, doc){
+    if(err){
+      handleError(res, err.massage, "Unexpected error.");
+      res.end();
+      return;
+    } else {
+      // the doc is empty?
+      var email = doc[0]._id;
+      if(email === undefined){
+        handleError(res, "ERROR emailByToken, no data found uonline", "You are not logged in.", 404);
+        res.end();
+        return;
+      } else {
+        // find the items for this email
+        mongoFind(res, ALLITEMS_COLLECTION, {"owner": email}, function(er, docs){
+          if(er){
+            handleError(res, er.massage, "Unexpected error.");
+            res.end();
+            return;
+          } else {
+            // the docs are empty?
+            if(docs[0] == null || docs[0] === undefined){
+              handleError(res, "ERROR emailByToken, no data found allitems", "You are not logged in.", 404);
+              res.end();
+              return;
+            } else {
+              // send the data
+              res.status(200).json({"success": true, "message": "Items found.", "data": docs});
+              res.end();
+            }// docs found
+          }// else there is no error
+        });// mongo find2
+      }// else email
+    }// else there is no error
+  });// mongo find1
+});
+/*  "/items"
+ *    POST: add an item
+ */
 app.post("/items", function(req, res) {
   var newItem = req.body;
   //Add the date to the item
-  newItem.createDate = new Date;
 
-  if (!(req.body.title || req.body.description)) {
+  if (newItem === undefined || newItem == null) {
     handleError(res, "Invalid user input", "No data provided.", 400);
+    res.end();
+    return;
   }
 
-  mongoFind(res, ALLITEMS_COLLECTION, newItem, function(err, doc) {
+  mongoInsert(res, ALLITEMS_COLLECTION, newItem, function(err, doc) {
     if(err) {
-      handleError(res, err.message, "Failed to create new item.")
+      handleError(res, err.message, "Failed to create new item.");
+      res.end();
+      return;
     } else {
-      res.status(201).json(doc.ops[0]);
+      res.status(201).json({"success": true, "message": "Item successfully added.", "data": doc[0]});
       res.end();
     }
   })
 });
-
-
+/*  "/items/edit"
+ *    POST: update an item
+ */
+app.post("/items/edit", function(req, res){
+  var item = req.body;
+  // check if the body is valid if not return handle error
+  if(item == null || item === undefined || !item._id){
+    handleError(res, "ERROR /items/edit invalid item", "Item not valid, please, restart the site and try it again.");
+    res.end();
+    return;
+  }
+  // if item is valid then updateit.
+  var id = new mongodb.ObjectID(item._id);
+  var data = item;
+  delete data._id;
+  console.log(id)
+  console.log(data)
+  mongoUpdate(res, ALLITEMS_COLLECTION, {"_id": id}, data, function(err, doc){
+    if(err){
+      handleError(res, "ERROR /items/edit invalid item", "Unexpected error.");
+      res.end();
+      return;
+    }
+    // if there is no error, send success
+    console.log("success edit")
+    res.status(200).json({"success": true, "message": "Item succesfully updatet.", "data": doc});
+    res.end();
+    return;
+  })
+})
 
 /*  "/contacts"
  *    GET: finds all contacts

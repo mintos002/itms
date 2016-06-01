@@ -26,3 +26,7 @@ body {
 .listing-button {
 	margin-bottom: 10px;
 }
+
+.btn-like{
+	float: right;
+}
