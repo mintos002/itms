@@ -9,6 +9,7 @@ var bcrypt = require("bcryptjs");
 
 // Variables
 var ALLITEMS_COLLECTION = "items";
+var LIKEDITEMS_COLLECTION = "likeditems"
 var USERS_COLLECTION = "users";
 var UONLINE_COLLECTION = "usersOnline";
 var NSALT = 10;
@@ -630,7 +631,7 @@ app.delete("/items/delete/:token/:item_id", function(req, res){
   console.log(item_id)
   console.log(token)
   if(token === undefined || item_id === undefined || token == {} || item_id == {}){
-    handleError(res, "ERROR /items/delete/:token invalid data", "Unexpected error, please, restart the site and try again.");
+    handleError(res, "ERROR /items/delete/:token invalid data", "Unexpected error, please, restart the site and try again.",400);
     res.end();
     return;
   } else {
@@ -671,6 +672,20 @@ app.delete("/items/delete/:token/:item_id", function(req, res){
     })
   }
 });
+/*  "/items/liked/:token"
+ *    GET: finds items by token
+ */
+app.get("/items/liked/:token", function(req, res){
+  var token = req.params.token;
+  // if token is invalid
+  if (token === undefined || token == {}) {
+    handleError(res, "Invalid user input", "No data provided.", 400);
+    res.end();
+    return;
+  }
+  // if token is valid
+
+})
 
 /*  "/contacts"
  *    GET: finds all contacts

@@ -8,8 +8,7 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
     $routeProvider
       .when("/", {
         templateUrl: "home.html",
-        controller: "HomeController",
-        
+        controller: "HomeController"
       })
       .when("/signup", {
         controller: "SignupController",
@@ -30,7 +29,10 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
         controller: "ProfileController",
         templateUrl: "profile.html"
       })
-      
+      .when("/likeditems",{
+        controller: "LikedController",
+        templateUrl: "likeditems.html"
+      })
       .otherwise({
         redirectTo: "/"
       })
@@ -61,6 +63,24 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
       }
       // if token is valid
       $http.get("/items/" + token).then(
+        function(response){
+          callback(true, response.data.message, response.data.data);
+        },
+        function(response){
+          callback(false, response.data.message, null);
+        }
+      );
+    }
+
+    this.getLikedItemsByToken = function(token, callback){
+      // check if there is a token
+      var token = token;
+      if(token == null || token === undefined){
+        callback(false, "No token provided", null);
+        return;
+      }
+      // if token is valid
+      $http.get("/items/liked/" + token).then(
         function(response){
           callback(true, response.data.message, response.data.data);
         },
@@ -205,20 +225,6 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
       $location.hash(id)
       //call anchorScroll()
       $anchorScroll();
-    }
-
-    this.getUserByEmail = function(vm, callback) {
-      $http.get('/user')
-    };
-
-    this.getTokenByEmail = function(vm, the_email, callback) {
-      console.log("Inside getTokenByEmail");
-      
-    }
-
-    this.getEmailByToken = function(vm, the_token, callback){
-      console.log("Inside getEmailByToken");
-
     }
 
     this.isLoggedIn = function(callback){
@@ -646,8 +652,13 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
   })
 
   // profileControler
-  .controller('ProfileController', function ($scope, $location, itemsFactory, Items) {
+  .controller('ProfileController', function ($scope, $location, Items) {
     var EMAIL = "";
+    // initial min max values for filter price
+    $scope.priceInfo = {
+      min: "0",
+      max: "1000"
+    };
     // check if it is logged in
     Items.isLoggedIn(function(success, message, data){
       if(!success){
@@ -659,20 +670,20 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
         // store the email
         EMAIL = data.email;
         console.log(EMAIL);
+
         // iniciate items
         $scope.items;
-
-        // initial min max values for filter price
-        $scope.priceInfo = {
-          min: 0,
-          max: 10000000000000000000000000000000000000
-        };
+        // iniciate search
+        $scope.showSearch = true;
 
         // Push Items
         $scope.newListing = {};
 
         $scope.addItem = function(newListing) {
-          newListing.image = 'default-img';
+          // if there is no image:
+          if(!newListing.image){
+            newListing.image = 'default-img';
+          }
           newListing.owner = EMAIL;
           // comprove all the data is in
           if(newListing == null || newListing === undefined){
@@ -804,106 +815,41 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
         getTheItems();    
       }
     });   
+  })
+
+  .controller("LikedController", function ($scope, $location, Items){
+    // check if the user is logged in
+    Items.isLoggedIn(function(success, message, data){
+      if(!success){
+        console.log("ProfileController no token.");
+        $location.path("#/");
+        return;
+      } 
+      else {
+        // iniciate items
+        $scope.items;
+
+
+        // Get the items from the db
+        var token = window.localStorage.getItem("token");
+        getTheItems = function(){
+          console.log("getTheItems")
+          Items.getLikedItemsByToken(token, function (success, message, data) {
+            if(!success){
+              // if there is an error show the error
+              console.log(message);
+              $scope.showAlertError = message;
+            } 
+            else{
+              // if it success:
+              console.log(data)
+              $scope.items = data;
+              console.log(data);
+            }
+          }); 
+        }
+        getTheItems();
+      };
+    })//is logged in
   });
 
-
-
-
-
-
-
-/*    .service("Contacts", function($http) {
-      this.getContacts = function() {
-          return $http.get("/contacts").
-              then(function(response) {
-                  return response;
-              }, function(response) {
-                  alert("Error finding contacts.");
-              });
-      }
-      this.createContact = function(contact) {
-          return $http.post("/contacts", contact).
-              then(function(response) {
-                  return response;
-              }, function(response) {
-                  alert("Error creating contact.");
-              });
-      }
-      this.getContact = function(contactId) {
-          var url = "/contacts/" + contactId;
-          return $http.get(url).
-              then(function(response) {
-                  return response;
-              }, function(response) {
-                  alert("Error finding this contact.");
-              });
-      }
-      this.editContact = function(contact) {
-          var url = "/contacts/" + contact._id;
-          console.log(contact._id);
-          return $http.put(url, contact).
-              then(function(response) {
-                  return response;
-              }, function(response) {
-                  alert("Error editing this contact.");
-                  console.log(response);
-              });
-      }
-      this.deleteContact = function(contactId) {
-          var url = "/contacts/" + contactId;
-          return $http.delete(url).
-              then(function(response) {
-                  return response;
-              }, function(response) {
-                  alert("Error deleting this contact.");
-                  console.log(response);
-              });
-      }
-  })
-  .controller("ListController", function(contacts, $scope) {
-      $scope.contacts = contacts.data;
-  })
-  .controller("NewContactController", function($scope, $location, Contacts) {
-      $scope.back = function() {
-          $location.path("#/");
-      }
-
-      $scope.saveContact = function(contact) {
-          Contacts.createContact(contact).then(function(doc) {
-              var contactUrl = "/contact/" + doc.data._id;
-              $location.path(contactUrl);
-          }, function(response) {
-              alert(response);
-          });
-      }
-  })
-  .controller("EditContactController", function($scope, $routeParams, Contacts) {
-      Contacts.getContact($routeParams.contactId).then(function(doc) {
-          $scope.contact = doc.data;
-      }, function(response) {
-          alert(response);
-      });
-
-      $scope.toggleEdit = function() {
-          $scope.editMode = true;
-          $scope.contactFormUrl = "contact-form.html";
-      }
-
-      $scope.back = function() {
-          $scope.editMode = false;
-          $scope.contactFormUrl = "";
-      }
-
-      $scope.saveContact = function(contact) {
-          Contacts.editContact(contact);
-          $scope.editMode = false;
-          $scope.contactFormUrl = "";
-      }
-
-      $scope.deleteContact = function(contactId) {
-          Contacts.deleteContact(contactId);
-      }
-  }); */
-
-
-    

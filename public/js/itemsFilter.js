@@ -9,9 +9,13 @@ angular
 			var max = priceInfo.max;
 
 			angular.forEach(listings, function(listing) {
-
-			 	if(listing.price >= min && listing.price <= max) {
-
+				if(min == ""){
+					min = "0";
+				} else if(max == ""){
+					max == "1000"
+				} else if(min <= listing.price && max == "1000") {
+					filtered.push(listing);
+				} else if(min <= listing.price && listing.price <= max) {
 			 		filtered.push(listing);
 			 	}
 			});

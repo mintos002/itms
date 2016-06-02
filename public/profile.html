@@ -1,4 +1,4 @@
-<div ng-include="'navbar.html'"></div>
+<div ng-include="'navbar.html'" ng-controller="ProfileController"></div>
 
 <div class="container">
   <!-- Alerts -->
@@ -8,48 +8,65 @@
 
 <div class="container" ng-show="showSearch === true">
   <!-- Min and Max Price Selection -->
-  <div class="col-sm-12 price-form">
-      
+  <div class="col-sm-12">
+    <div class="col-sm-12">
+      <div class="row listing-form-row">
+        <div class="input-group ">
+          <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span>Search</span>
+          <input
+            type="text"
+            placeholder="Search an item"
+            class="form-control"
+            ng-model="searchItem">
+        </div>
+      </div>
+    </div>
     <div class="col-sm-6">
-      <div class="input-group">
-        <span class="input-group-addon">Min Price</span>
-        <select name="minPrice" id="minPrice" ng-model="priceInfo.min" class="form-control">
-          <option value="0">Under 50</option>
-          <option value="100">100</option>
-          <option value="200">200</option>
-          <option value="300">300</option>
-          <option value="400">400</option>
-          <option value="500">500</option>
-          <option value="600">600</option>
-          <option value="700">700</option>
-          <option value="800">800</option>
-          <option value="900">900</option>
-          <option value="1000">1000</option>
-        </select>
+      <div class="listing-form-row price-form-row">
+        <div class="input-group">
+          <span class="input-group-addon">Min Price</span>
+          <select name="minPrice" id="minPrice" ng-model="priceInfo.min" class="form-control">
+            <option value="" disabled selected>Select a value</option>
+            <option value="0">0</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="300">300</option>
+            <option value="400">400</option>
+            <option value="500">500</option>
+            <option value="600">600</option>
+            <option value="700">700</option>
+            <option value="800">800</option>
+            <option value="900">900</option>
+            <option value="1000">1000</option>
+          </select>
+        </div>
       </div>
     </div>
 
     <div class="col-sm-6">
-      <div class="input-group">
-        <span class="input-group-addon">Max Price</span>
-        <select name="maxPrice" id="maxPrice" ng-model="priceInfo.max" class="form-control">
-          <option value="50">50</option>
-          <option value="100">100</option>
-          <option value="200">200</option>
-          <option value="300">300</option>
-          <option value="400">400</option>
-          <option value="500">500</option>
-          <option value="600">600</option>
-          <option value="700">700</option>
-          <option value="800">800</option>
-          <option value="900">900</option>
-          <option value="10000000000000000000000000000000000000">Above 1000</option>
-        </select>
+      <div class="listing-form-row price-form-row">
+        <div class="input-group">
+          <span class="input-group-addon">Max Price</span>
+          <select name="maxPrice" id="maxPrice" ng-model="priceInfo.max" class="form-control">
+            <option value="" disabled selected>Select a value</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="300">300</option>
+            <option value="400">400</option>
+            <option value="500">500</option>
+            <option value="600">600</option>
+            <option value="700">700</option>
+            <option value="800">800</option>
+            <option value="900">900</option>
+            <option value="1000">Above 1000</option>
+          </select>
+        </div>
       </div>
     </div>        
   </div>
 </div>
-
+<hr>
 <!-- Add data -->
 <div class="container">
   <button
@@ -69,6 +86,11 @@
     <h3>Add an Item</h3>
     <div class="col-sm-6">
       <div class="thumbnail">
+        <p>
+          <input ng-file-select class="filestyle" type="file">
+        </p>
+
+
         <img ng-src="img/default-img.jpg" alt="Inser a picture" height="50">
         
         <form name="addItem-form" novalidate>
@@ -254,7 +276,7 @@
 
 <!-- Real Estate Listings -->
 <div class="container">
-  <div class="col-xs-12 col-sm-6 col-md-4" ng-repeat="item in items | itemsFilter:priceInfo | orderBy: '-_id'">
+  <div class="col-xs-12 col-sm-6 col-md-4" ng-repeat="item in items | itemsFilter:priceInfo | orderBy: '-_id' | filter:searchItem">
     <div class="thumbnail">
     <img ng-src="img/{{item.image}}.jpg" alt="" >
       <div class="caption">
