@@ -8,6 +8,10 @@ body {
 	background-color: #0064EE;
 }
 
+.navbar-home-img {
+	margin-top: -5px;
+}
+
 .price-form-row {
 	margin-bottom: 10px;
 }
@@ -29,4 +33,8 @@ body {
 
 .btn-like{
 	float: right;
+}
+
+.details {
+	margin-top: 10px;
 }

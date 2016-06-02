@@ -74,6 +74,13 @@
     <div class="thumbnail">
       <img ng-src="img/{{item.image}}.jpg" alt="" >
       <div class="caption">
+        <!-- Alerts -->
+        <div class="alert alert-danger" ng-show="showAlertItemError && item._id == showInId"> {{ showAlertItemError }}</div>
+        <div class="alert alert-success" ng-show="showAlertItemSuccess && item._id == showInId">{{showAlertItemSuccess}}</div>
+        <!-- email show -->
+        <div class="listing-form-row" ng-show="loggedIn">
+          <label>Owner: <a href="mailto:{{item.owner}}">{{item.owner}}</a></label>
+        </div>
         <!-- Conditionally hiden -->
         <div ng-hide="showDetails === true">
           <h3><i class="glyphicon glyphicon-tag"></i> {{item.price | currency}}</h3>
@@ -90,30 +97,26 @@
           Details
         </button>
 
-        <!-- Button to show owner -->
-        <button
-          class="btn btn-sm btn-warning btn-like"
-          ng-hide="showDetails === true || loggedIn === false"
-          ng-click="showOwner = !showOwner">
-          Show the owner
-        </button>
-
-        <div class="listing-form-row" ng-show="showOwner">
-          <label>Owner: <a href="mailto:{{item.owner}}">{{item.owner}}</a></label>
-        </div>
-
         <button 
           class="btn btn-sm btn-danger"
           ng-show="showDetails === true"
           ng-click="showDetails = !showDetails">
-          Close
+          Close details
+        </button>
+
+        <!-- Button to show owner -->
+        <button
+          class="btn btn-sm btn-warning btn-like"
+          ng-hide="loggedIn === false"
+          ng-click="imInterested(item)">
+          Add to liked items
         </button>
 
         <div class="details" ng-show="showDetails === true">
-            <p>{{item.description}}</p>
+            <p><h4>{{item.description}}</h4></p>
         </div>
 
-        <pre>{{item | json}}</pre>
+        <pre class="listing-form-row">{{item | json}}</pre>
 
       </div>
     </div>

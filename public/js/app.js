@@ -90,6 +90,23 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
       );
     }
 
+    this.addLike = function(itemId, callback){
+      // check if there is a token and a itemId
+      var token = window.localStorage.getItem("token");
+      if(itemId === undefined || token === undefined){
+        callback(false, "You are not logged in.", null);
+        return;
+      } // if the data is valid, send to server
+      $http.post("/items/like", {"itemId" : itemId, "token": token}).then(
+        function(response){ // if server returns success
+          callback(true, response.data.message, response.data.data);
+        },
+        function(response){ // if server returns fail
+          callback(false, response.data.message, null);
+        }
+      );
+    }
+
     this.addItem = function(item, callback) {
       if(!item){
         callback(false, "No item provided.", null)
@@ -299,6 +316,8 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
   // homeControler
   .controller('HomeController', function ($scope, Items) {
     console.log("HomeController");
+    // init email constant
+    var EMAIL = "";
     // initial min max values for filter price
     $scope.priceInfo = {
         min: "0",
@@ -307,19 +326,43 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
     // init alerts
     $scope.showAlertError = "";
     $scope.showAlertSuccess = "";
+
     //check if the user is logged in to show logged privileges
     Items.isLoggedIn(function(success, message, data){
       if(!success){
-        console.log("HomeController no token.");
+        // if the user is not logged in, don't show interested button
         $scope.loggedIn = false;
         return;
       } else {
+        // if the user is logged in, show the button and save te email
         $scope.loggedIn = true;
+        EMAIL = data.email;
       }
     });
+
+    $scope.imInterested = function(item){
+      console.log(item)
+      // Add like to the item by the current user
+      var itemId = item._id;
+      $scope.showInId = itemId;
+      console.log(itemId)
+      Items.addLike(itemId, function(success, message, data){
+        if(!success){ // if there is an error, show an alert
+          $scope.showAlertItemError = message; 
+          $scope.showAlertItemSuccess = "";
+        } 
+        else {
+          // show a success alert
+          $scope.showAlertItemError = "";
+          $scope.showAlertItemSuccess = message;
+        }
+      });
+      
+    }
+
     // init items array
     $scope.items;
-    
+    // get items
     Items.getItems(function(success, message, data){
       if(!success) {
         // if server returns no success show alert error
@@ -328,7 +371,6 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
       } else {
         // if
         $scope.items = data;
-
       }
     });
       
@@ -669,6 +711,9 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
           // if there is no image:
           if(!newListing.image){
             newListing.image = 'default-img';
+          }
+          if(!newListing.likes){
+            newListing.likes = [];
           }
           newListing.owner = EMAIL;
           // comprove all the data is in

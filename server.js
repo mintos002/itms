@@ -107,6 +107,44 @@ function mongoUpdate(res, coll, find, change, callback){
   });
 }
 
+function mongoUpdateArray(res, coll, find, change, callback){
+  console.log("In mongoUpdate");
+  db.collection(coll).update(find, {$push: change}, function(err, doc){
+    callback(err, doc);
+  });
+}
+
+function isLoggedIn(res, token, callback){
+
+  if(token == undefined || token == null){
+    handleError(res, "isLoggedIn", "You are not logged in.", 404);
+    res.end();
+    callback(false, null);
+    return;
+  }
+  // if data is valid, check if the user is online
+  mongoFind(res, UONLINE_COLLECTION, {"token" : token}, function(err, doc) {
+    // if there is an error, throw an error to client
+    if(err){
+      if(err){
+        handleError(res, "isLoggedIn", "Unexpected error.");
+        res.end();
+        callback(false, null);
+      } 
+    }
+    // if there is no error compare tokens and send the user email
+    else { 
+      if(doc[0] === undefined){
+        handleError(res, "isLoggedIn", "You are not logged in.", 404);
+        res.end();
+        callback(false);
+      } else {
+      var email = doc[0]._id;
+      callback(true, email);
+      }
+    }
+  });
+}
 
 // ----------------------------------------------------
 // ROUTES
@@ -684,77 +722,98 @@ app.get("/items/liked/:token", function(req, res){
     return;
   }
   // if token is valid
+  // search email by token
+  mongoFind(res, UONLINE_COLLECTION, {"token": token}, function(err, doc){
+    if(err){
+      // if error, thorw error
+      handleError(res, err.message, "Unexpected error, please, restart the site and try again.");
+      res.end();
+      return
+    } else {
+      // if success, check if the doc is empty
+      var email = doc[0]._id;
+      if(email === undefined){
+        handleError(res, "ERROR /items/liked/:token not logged in", "You are not logged in.");
+        res.end();
+        return;
+      }
+      // if there is an email search items where likes == to current email
+      mongoFind(res, ALLITEMS_COLLECTION, {"likes" : email}, function(er, docs){
+        if(er){
+          // if error, thorw error
+          handleError(res, err.message, "Unexpected error, please, restart the site and try again.");
+          res.end();
+          return;
+        }
+        // if there is no error, check if the doc exists:
+        // the docs are empty?
+        if(docs[0] == null || docs[0] === undefined){
+          handleError(res, "ERROR /items/liked/:token no data found", "You have no liked items.", 404);
+          res.end();
+          return;
+        } else {
+          // send the data
+          res.status(200).json({"success": true, "message": "Items found.", "data": docs});
+          res.end();
+        }// docs found
+      
+      });
+    }
+  })  
 
-})
-
-/*  "/contacts"
- *    GET: finds all contacts
- *    POST: creates a new contact
+});
+/*  "/items/liked/"
+ *    post: update likes
  */
-/*
-app.get("/contacts", function(req, res) {
-  db.collection(CONTACTS_COLLECTION).find({}).toArray(function(err, docs) {
-    if (err) {
-      handleError(res, err.message, "Failed to get contacts.");
-    } else {
-      res.status(200).json(docs);  
-    }
-  });
-});
+app.post("/items/like", function(req, res){
+  // get the req
+  var item_id = req.body.itemId;
+  var token = req.body.token;
 
-app.post("/contacts", function(req, res) {
-  var newContact = req.body;
-  newContact.createDate = new Date();
-
-  if (!(req.body.firstName || req.body.lastName)) {
-    handleError(res, "Invalid user input", "Must provide a first or last name.", 400);
+  if(item_id == {} || item_id === undefined){
+    handleError(res, "ERROR /items/like invalid data", "Data not valid, please, restart the site and try it again.");
+    res.end();
+    return;
   }
+  // call isLoggedIn function
+  isLoggedIn(res, token, function(success, email){
+    if(success){
+      // if it is logged in:
+      if(email == null){
+        handleError(res, "ERROR no email", "Unexpected error.");
+        res.end();
+        return;
+      }
 
-  db.collection(CONTACTS_COLLECTION).insertOne(newContact, function(err, doc) {
-    if (err) {
-      handleError(res, err.message, "Failed to create new contact.");
-    } else {
-      res.status(201).json(doc.ops[0]);
+      var id = new mongodb.ObjectID(item_id);
+
+      mongoFind(res, ALLITEMS_COLLECTION, {"_id": id, "likes": email}, function(err, docs){
+        if(err){
+          handleError(res, "ERROR /items/like invalid item", "Unexpected error.");
+          res.end();
+          return;
+        }
+        if(docs[0]){
+          res.status(200).json({"success": true, "message": "Item already in your liked items.", "data": docs});
+          res.end();
+          return;
+        } else {
+          mongoUpdateArray(res, ALLITEMS_COLLECTION, {"_id": id}, {"likes" : email}, function(err, doc){
+            if(err){
+              handleError(res, "ERROR /items/like invalid item", "Unexpected error.");
+              res.end();
+              return;
+            }
+            // if there is no error, send success
+            res.status(200).json({"success": true, "message": "Item added to your liked items.", "data": doc});
+            res.end();
+            return;
+          })
+        }
+      });
+      
+      
     }
-  });
+  });//islogedin
+  
 });
-
-  "/contacts/:id"
- *    GET: find contact by id
- *    PUT: update contact by id
- *    DELETE: deletes contact by id
- 
-
-app.get("/contacts/:id", function(req, res) {
-  db.collection(CONTACTS_COLLECTION).findOne({ _id: new ObjectID(req.params.id) }, function(err, doc) {
-    if (err) {
-      handleError(res, err.message, "Failed to get contact");
-    } else {
-      res.status(200).json(doc);  
-    }
-  });
-});
-
-app.put("/contacts/:id", function(req, res) {
-  var updateDoc = req.body;
-  delete updateDoc._id;
-
-  db.collection(CONTACTS_COLLECTION).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, function(err, doc) {
-    if (err) {
-      handleError(res, err.message, "Failed to update contact");
-    } else {
-      res.status(204).end();
-    }
-  });
-});
-
-app.delete("/contacts/:id", function(req, res) {
-  db.collection(CONTACTS_COLLECTION).deleteOne({_id: new ObjectID(req.params.id)}, function(err, result) {
-    if (err) {
-      handleError(res, err.message, "Failed to delete contact");
-    } else {
-      res.status(204).end();
-    }
-  });
-});
-*/
