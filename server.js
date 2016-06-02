@@ -554,7 +554,7 @@ app.get("/items/:token", function(req, res){
           } else {
             // the docs are empty?
             if(docs[0] == null || docs[0] === undefined){
-              handleError(res, "ERROR emailByToken, no data found allitems", "You have no items. Add an Item and now start selling!", 404);
+              handleError(res, "ERROR emailByToken, no data found allitems", "You have no items. Add an Item now and start selling!", 404);
               res.end();
               return;
             } else {

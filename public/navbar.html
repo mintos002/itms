@@ -1,5 +1,5 @@
 <!-- HEADER AND NAVBAR --> 
-  <header>
+  <header ng-controller="NavbarController">
     <div>
       <nav class="navbar navbar-default">
         <div class="container-fluid">
@@ -14,9 +14,9 @@
           </div>
           <div class="collapse navbar-collapse" id="myNavbar">
             <ul class="nav navbar-nav">
-              <li ng-click="showSearch = !showSearch"><a href="#"> Search</a></li>
+              <li ng-click="showSearch = !showSearch"><a href="#/"> Search</a></li>
             </ul>
-            <div ng-controller="NavbarController">
+            <div>
               <ul class="nav navbar-nav navbar-right" ng-hide="navbarLogged" >
                 <li><a href="#/signup"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
                 <li><a href="#/login"><span class="glyphicon glyphicon-log-in"></span> LogIn</a></li>

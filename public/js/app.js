@@ -294,24 +294,19 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
     $scope.navbarLogged = true;
     $scope.nav_user_name = firstName;
 
-    // Items.isLoggedIn(function(success, message, data){
-    //   if(!success){
-    //     console.log("NO ONLINE " + message);
-    //     $scope.navbarLogged = false;
-
-    //   } else {
-    //     console.log("YES ONLINE " + message);
-    //     $scope.navbarLogged = true;
-    //     $scope.nav_user_name = firstName;
-    //   }
-    // });
-
-
   })
 
   // homeControler
   .controller('HomeController', function ($scope, Items) {
     console.log("HomeController");
+    // initial min max values for filter price
+    $scope.priceInfo = {
+        min: "0",
+        max: "1000"
+    };
+    // init alerts
+    $scope.showAlertError = "";
+    $scope.showAlertSuccess = "";
     //check if the user is logged in to show logged privileges
     Items.isLoggedIn(function(success, message, data){
       if(!success){
@@ -324,23 +319,14 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
     });
     // init items array
     $scope.items;
-    // init alerts
-    $scope.showAlertError = "";
-    $scope.showAlertSuccess = "";
     
-    // initial min max values for filter price
-    $scope.priceInfo = {
-        min: 0,
-        max: 1000000
-    };
-    
-
     Items.getItems(function(success, message, data){
       if(!success) {
-        // show alert error
+        // if server returns no success show alert error
         $scope.showAlertError = message;
         $scope.showAlertSuccess = "";
       } else {
+        // if
         $scope.items = data;
 
       }
@@ -818,17 +804,22 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
   })
 
   .controller("LikedController", function ($scope, $location, Items){
+    console.log("In LikedController")
+    // initial min max values for filter price
+    $scope.priceInfo = {
+      min: "0",
+      max: "1000"
+    };
     // check if the user is logged in
     Items.isLoggedIn(function(success, message, data){
       if(!success){
-        console.log("ProfileController no token.");
+        console.log("LikedController no token.");
         $location.path("#/");
         return;
       } 
       else {
         // iniciate items
         $scope.items;
-
 
         // Get the items from the db
         var token = window.localStorage.getItem("token");
