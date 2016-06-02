@@ -90,6 +90,23 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
       );
     }
 
+    this.removeLike = function(itemId, callback){
+      // check if there is a token and a itemId
+      var token = window.localStorage.getItem("token");
+      if(itemId === undefined || token === undefined){
+        callback(false, "You are not logged in.", null);
+        return;
+      } // if the data is valid, send to server
+      $http.delete("/items/like/" + token + "/" + itemId).then(
+        function(response){ // if server returns success
+          callback(true, response.data.message, response.data.data);
+        },
+        function(response){ // if server returns fail
+          callback(false, response.data.message, null);
+        }
+      );
+    }
+
     this.addLike = function(itemId, callback){
       // check if there is a token and a itemId
       var token = window.localStorage.getItem("token");
@@ -865,6 +882,27 @@ angular.module("ngItems", ['ngRoute', 'ui.bootstrap', 'ngMessages'])
       else {
         // iniciate items
         $scope.items;
+
+        $scope.unlike = function(item){
+          console.log(item)
+          // Add like to the item by the current user
+          var itemId = item._id;
+          $scope.showInId = itemId;
+          console.log(itemId)
+          Items.removeLike(itemId, function(success, message, data){
+            if(!success){ // if there is an error, show an alert
+              $scope.showAlertItemError = message; 
+              $scope.showAlertItemSuccess = "";
+            } 
+            else {
+              // show a success alert
+              $scope.showAlertItemError = "";
+              $scope.showAlertItemSuccess = "";
+              getTheItems();
+            }
+          });
+          
+        }
 
         // Get the items from the db
         var token = window.localStorage.getItem("token");

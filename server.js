@@ -114,6 +114,13 @@ function mongoUpdateArray(res, coll, find, change, callback){
   });
 }
 
+function mongoUpdateArrayDelete(res, coll, find, change, callback){
+  console.log("In mongoUpdate");
+  db.collection(coll).update(find, {$pull: change}, function(err, doc){
+    callback(err, doc);
+  });
+}
+
 function isLoggedIn(res, token, callback){
 
   if(token == undefined || token == null){
@@ -811,6 +818,51 @@ app.post("/items/like", function(req, res){
           })
         }
       });
+      
+      
+    }
+  });//islogedin
+  
+});
+
+/*  "/items/liked/:token/:itemid"
+ *    DELETE: update likes
+ */
+ app.delete("/items/like/:token/:itemId", function(req, res){
+  // get the req
+  var item_id = req.params.itemId;
+  var token = req.params.token;
+
+  if(item_id == {} || item_id === undefined){
+    handleError(res, "ERROR /items/like/:token/:itemId", "Data not valid, please, restart the site and try it again.");
+    res.end();
+    return;
+  }
+  // call isLoggedIn function
+  isLoggedIn(res, token, function(success, email){
+    if(success){
+      // if it is logged in:
+      if(email == null){
+        handleError(res, "ERROR no email", "Unexpected error.");
+        res.end();
+        return;
+      }
+
+      var id = new mongodb.ObjectID(item_id);
+
+      mongoUpdateArrayDelete(res, ALLITEMS_COLLECTION, {"_id": id}, {"likes" : email}, function(err, doc){
+        if(err){
+          handleError(res, "ERROR /items/like/:token/:itemId", "Unexpected error.");
+          res.end();
+          return;
+        }
+        // if there is no error, send success
+        res.status(200).json({"success": true, "message": "Item removed from your liked items.", "data": doc});
+        res.end();
+        return;
+      })
+        
+      
       
       
     }

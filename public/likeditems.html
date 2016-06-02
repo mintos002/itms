@@ -74,6 +74,9 @@
     <div class="thumbnail">
     <img ng-src="img/{{item.image}}.jpg" alt="" >
       <div class="caption">
+        <!-- Alerts -->
+        <div class="alert alert-danger" ng-show="showAlertItemError && item._id == showInId"> {{ showAlertItemError }}</div>
+        <div class="alert alert-success" ng-show="showAlertItemSuccess && item._id == showInId">{{showAlertItemSuccess}}</div>
         <!-- email show -->
         <div class="listing-form-row" >
           <label>Owner: <a href="mailto:{{item.owner}}">{{item.owner}}</a></label>
@@ -103,14 +106,16 @@
         <!-- Button for edit -->
         <button
           class="btn btn-sm btn-warning btn-like"
-          ng-hide="showDetails === true"
-          ng-click="editItem(item)"> Not Interested
+          ng-click="unlike(item)"> 
+          Not Interested
         </button>
 
         <div class="details" ng-show="showDetails === true">
           <p><h4>{{item.description}}</h4></p>
         </div>
 
+        <pre class="listing-form-row">{{item | json}}</pre>
+        
       </div>
     </div>
   </div>

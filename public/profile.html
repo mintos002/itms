@@ -86,11 +86,7 @@
     <h3>Add an Item</h3>
     <div class="col-sm-6">
       <div class="thumbnail">
-        <p>
-          <input ng-file-select class="filestyle" type="file">
-        </p>
-
-
+      
         <img ng-src="img/default-img.jpg" alt="Inser a picture" height="50">
         
         <form name="addItem-form" novalidate>
@@ -312,6 +308,8 @@
         <div class="details" ng-show="showDetails === true">
           <p><h4>{{item.description}}</h4></p>
         </div>
+
+        <pre class="listing-form-row">{{item | json}}</pre>
 
       </div>
     </div>
