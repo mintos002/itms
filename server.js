@@ -5,7 +5,7 @@ var bodyParser = require("body-parser");
 var mongodb = require("mongodb");
 var ObjectID = mongodb.ObjectID;
 var bcrypt = require("bcryptjs");
-//var laLogica = require('logic/logic.js')
+
 
 // Variables
 var ALLITEMS_COLLECTION = "items";
@@ -14,7 +14,7 @@ var USERS_COLLECTION = "users";
 var UONLINE_COLLECTION = "usersOnline";
 var NSALT = 10;
 var URLENC = bodyParser.urlencoded({ extended: true });
-//use conf
+//server config
 var app = express();
 app.use(express.static(__dirname + "/public"));
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
@@ -120,10 +120,12 @@ function mongoUpdateArrayDelete(res, coll, find, change, callback){
     callback(err, doc);
   });
 }
-
+// this function checks if the user is logged in and if it is,
+// it returns the email
 function isLoggedIn(res, token, callback){
-
-  if(token == undefined || token == null){
+  console.log("In isLoggedIn")
+  // Check if the token is a valid data, if not send an error
+  if(token === undefined || token == null || token == {} || token == ""){
     handleError(res, "isLoggedIn", "You are not logged in.", 404);
     res.end();
     callback(false, null);
@@ -141,7 +143,7 @@ function isLoggedIn(res, token, callback){
     }
     // if there is no error compare tokens and send the user email
     else { 
-      if(doc[0] === undefined){
+      if(doc[0] === undefined || doc[0] == {} || doc[0] == null){
         handleError(res, "isLoggedIn", "You are not logged in.", 404);
         res.end();
         callback(false);
@@ -156,6 +158,9 @@ function isLoggedIn(res, token, callback){
 // ----------------------------------------------------
 // ROUTES
 // ----------------------------------------------------
+
+// USER SIGNUP
+
 /*  "/user/signup"
  *    POST: sends the signup info
  */
@@ -166,12 +171,10 @@ app.post("/user/signup", function(req, res) {
   var lastName = req.body.lastName;
   var email = req.body.email;
   var password = req.body.password;
-  console.log(firstName);
-  console.log(req);
 
-  // if data is invalid:
-  if(!(firstName || lastName || email || password)) {
-    handleError(res, "Invalid user input", "No data provided.", 400);
+  // check if the data is valid and if the lenght of the password is correct
+  if(!(firstName || lastName || email || password) || password.length <6) {
+    handleError(res, "Invalid user input", "Incorrect data provided, please, try again.", 400);
     res.end();
     return;
   }
@@ -184,6 +187,7 @@ app.post("/user/signup", function(req, res) {
       return;
     }
     // to evoid repeating users, the _id will be the email
+    // in a mongodb an _id is a unique index.
     var user = {firstName, lastName, _id: email, hash};
     
     mongoInsert(res, USERS_COLLECTION, user, function(err, docs) {
@@ -199,7 +203,6 @@ app.post("/user/signup", function(req, res) {
         }
         
       } else {
-        console.log("signup stored!!")
         res.status(201).json({"success" : true, "message": "New user registered."});
         res.end();
         return;
@@ -208,21 +211,23 @@ app.post("/user/signup", function(req, res) {
   });
 });
 
+// USER LOGIN
 
 /*  "/user/login"
  *    POST: sends the login
  */
 app.post("/user/login", function(req, res) {
   console.log("Server /user/login")
-  
+  // get the request
   var us = req.body.email;
   var pw = req.body.password;
+  // check if the data is valid
   if (us === undefined || pw === undefined) {
     handleError(res, "user or pswrd undefined", "User or/and password undefined.", 400);
     res.end();
     return;
   } else {
-    
+    // if the data is valid check if the user is registered
     mongoFind(res,USERS_COLLECTION, {"_id":us}, function(err, doc){
       if(err){
         handleError(res, err.message, "Error while conecting to db.");
@@ -231,7 +236,6 @@ app.post("/user/login", function(req, res) {
       } 
       else {
         var user = doc[0];
-
         // Comprove data
         if (user === undefined) {
           handleError(res, "User does not exist.", "Email or password incorrect.", 404);
@@ -239,9 +243,8 @@ app.post("/user/login", function(req, res) {
           return;
         } 
         else { 
-          // USER EXISTS!
+          // user exists, compare the hashed password
           var pwdb = user.hash;
-
           bcrypt.compare(pw, pwdb, function(error, result){
             if(error){
               handleError(res, "Error comparing bcrypt pswrds", "Error connecting to db.");
@@ -262,7 +265,7 @@ app.post("/user/login", function(req, res) {
                 mongoInsert(res, UONLINE_COLLECTION, data, function(err, doc){
                   if (err) {
                     // if the error inserting data is 11000 => data already exists
-                    // so we need to remove the data to login again
+                    // so we need to remove the data to login again.
                     if(err.code == 11000){
                       mongoRemove(res, UONLINE_COLLECTION, {"_id" : us}, function(error,result){
                       if(error){
@@ -299,64 +302,43 @@ app.post("/user/login", function(req, res) {
 
 }); // END /user/login
 
+// USER LOGOUT
+
 /*  "/user/logout"
  *    DELETE: sends the logout
  */
-
 app.delete("/user/logout/:token", function(req, res){
   var token = req.params.token;
   //var token = req.body.token;
-
-  if(!token) {
-    handleError(res, "DB ERROR /user/logout no token send.", "You are not logged in.");
-    res.end();
-    return;
-  }
-
-  mongoRemove(res, UONLINE_COLLECTION, {'token': token}, function(err, result) {
-    if(err) {
-      handleError(res, "DB ERROR /user/logout " + err.code, "Unexpected error trying to logout.");
-      res.end();
-      return;
-    } else {
-      console.log("DB SUCCESS /user/logout");
-      res.status(200).json({"success": true, "message": "Successfully logged out."});
-      res.end();
+  // check if the user is logged in
+  isLoggedIn(res, token, function(success, email){
+    if(success) {
+      mongoRemove(res, UONLINE_COLLECTION, {'token': token}, function(err, result) {
+        if(err) {
+          handleError(res, "DB ERROR /user/logout " + err.code, "Unexpected error trying to logout.");
+          res.end();
+          return;
+        } else {
+          console.log("DB SUCCESS /user/logout");
+          res.status(200).json({"success": true, "message": "Successfully logged out."});
+          res.end();
+        }
+      });
     }
-  });
-
-
+  }); 
 });
+
+// GET USER BY TOKEN
 
 /*  "/user"
  *    GET: user by token
  */
 app.get("/user/:token", function(req,res){
   var token = req.params.token;
-  // check if it's a valid request
-  if(token == undefined || token == null){
-    handleError(res, "ERROR /user/:token: Undefined or Null", "You are not logged in.", 404);
-    res.end();
-    return;
-  }
-  // search the email by token
-  mongoFind(res, UONLINE_COLLECTION, {"token" : token}, function(err,doc){
-    // if db returns error
-    if(err){
-      handleError(res, "DB ERROR /user/:token: ", "Unexpected error.");
-      res.end();
-      return;
-    } // if db returns success
-    else {
-      // if there is no result:
-      if(doc[0] === undefined){
-        handleError(res, "DB ERROR /user/:token: ", "You are not logged in.");
-        res.end();
-        return;
-      } 
-      // if there is a result, get the email and find the user:
-      var email = doc[0]._id;
-      mongoFind(res, USERS_COLLECTION, {"_id" : email}, function(erro, docs){
+  // check if the user is logged in
+  isLoggedIn(res, token, function(success, email){
+    if(success){
+       mongoFind(res, USERS_COLLECTION, {"_id" : email}, function(erro, docs){
         // if db returns error
         if(erro){
           handleError(res, "DB ERROR /user/:token: ", "Unexpected error.");
@@ -378,48 +360,31 @@ app.get("/user/:token", function(req,res){
         }
 
       });
-
     }
   });
+  
 });
 
+// USER LOGGED IN?
 
 /*  "/user/isloggedin"
  *    GET: checks the isloggedin
  */
  app.get("/user/isloggedin/:token", function(req, res) {
-  // guet the request+
+  // get the request
   var token = req.params.token;
-  // check if it's a valid request
-  if(token == undefined || token == null){
-    handleError(res, "ERROR /user/isloggedin: Undefined or Null", "You are not logged in.", 404);
-    res.end();
-    return;
-  }
-  // if data is valid, check if the user is online
-  mongoFind(res, UONLINE_COLLECTION, {"token" : token}, function(err, doc) {
-    // if there is an error, throw an error to client
-    if(err){
-      if(err){
-        handleError(res, "DB ERROR /user/isloggedin: ", "Unexpected error.");
-        res.end();
-      } 
-    }
-    // if there is no error compare tokens and send the user email
-    else { 
-      if(doc[0] === undefined){
-        handleError(res, "ERROR /user/isloggedin: token not found", "You are not logged in.", 404);
-        res.end();
-        return;
-      }
-      console.log("SUCCESS /user/isloggedin")
-      var email = doc[0]._id;
-
+  console.log("adddhfshifasdh")
+  // check if it's logged in with isLoggedIn method
+  isLoggedIn(res, token, function(success, email){
+    if(success){
+      // if user is logged in:
       res.status(200).json({"success" : true, "message": "You are logged in.", "data" : {"email" : email}});
       res.end();
     }
   });
  });
+
+ // USER DELETE ALL ACCOUNT
 
 /*  "/user/account/delete"
  *    DELETE: delete all where user is in
@@ -427,121 +392,120 @@ app.get("/user/:token", function(req,res){
  app.delete("/user/account/delete/:token", function(req,res){
   var token = req.params.token;
   var email = "";
-  // first we need to get the email
-  mongoFind(res, UONLINE_COLLECTION, {"token" : token}, function(err,doc){
-    if(err){
-      handleError(res, "DB ERROR /user/account/delete/:token", "Unexpected error.");
+  // show if user is logged in
+  isLoggedIn(res, token, function(success, email){
+    if(success){ // if the user is logged in:
+      // if the email is correct start removeing data:
+      // remove your items
+      mongoRemove(res, ALLITEMS_COLLECTION, {"owner" : email}, function(err, result){
+        if(err){
+          handleError(res, "DB ERROR /user/account/delete/:token", "Unexpected error.");
+          res.end();
+          return;
+        }
+      });// mongoRemoveItems
+      // logout
+      mongoRemove(res, UONLINE_COLLECTION, {"_id" : email}, function(err, result){
+        if(err){
+          handleError(res, "DB ERROR /user/account/delete/:token", "Unexpected error.");
+          res.end();
+          return;
+        }
+      })// mongoRemoveUOnline
+      // remove your profile
+      mongoRemove(res, USERS_COLLECTION, {"_id" : email}, function(err, result){
+        if(err){
+          handleError(res, "DB ERROR /user/account/delete/:token", "Unexpected error.");
+          res.end();
+          return;
+        }
+      })// mongoRemoveUOnline
+      // if all went ok 
+      res.status(200).json({"success": true, "message": "Account successfully deleted."});
       res.end();
       return;
-    } 
-    // if there is no error get the email and check if it is valid
-    email = doc[0]._id;
-    if(email == null || email === undefined){
-      handleError(res, "DB ERROR /user/account/delete/:token", "You are not logged in.");
-      res.end();
-      return;
-    }
-    // if the email is correct start removeing data
-    mongoRemove(res, ALLITEMS_COLLECTION, {"owner" : email}, function(err, result){
-      if(err){
-        handleError(res, "DB ERROR /user/account/delete/:token", "Unexpected error.");
-        res.end();
-        return;
-      }
-      console.log(result);
-    });// mongoRemoveItems
-    mongoRemove(res, UONLINE_COLLECTION, {"_id" : email}, function(err, result){
-      if(err){
-        handleError(res, "DB ERROR /user/account/delete/:token", "Unexpected error.");
-        res.end();
-        return;
-      }
-      console.log(result);
-    })// mongoRemoveUOnline
-    mongoRemove(res, USERS_COLLECTION, {"_id" : email}, function(err, result){
-      if(err){
-        handleError(res, "DB ERROR /user/account/delete/:token", "Unexpected error.");
-        res.end();
-        return;
-      }
-      console.log(result);
-    })// mongoRemoveUOnline
-    // if all went ok 
-    res.status(200).json({"success": true, "message": "Account successfully deleted."});
-    res.end();
-    return;
-
-  });//mongoFind
+    } // end success
+  });
  });
+
+// USER CHANGE PASSWORD
 
 /*  "/user/account/password"
  *    POST: changes the password
  */
  app.post("/user/account/password", function(req,res){
     console.log("Into user/account/password");
-    var email = req.body.email;
     var opw = req.body.oldpassword;
     var npw = req.body.newpassword;
+    var token = req.body.token;
 
-    // make sure there are valid
-    if(opw === undefined || npw === undefined || email === undefined || opw == null || npw==null || email==null){
-      handleError(res, "ERROR user/account/password: invalid data.", "Incorrect data.")
-      res.end();
-      return;
-    }
-    // check if the oldpassword the is correct one
-    mongoFind(res, USERS_COLLECTION, {"_id" : email}, function(err, doc){
-      if(err){
-        // if thre is an error, throwit
-        handleError(res, err.message, "Unexpected error.");
-        res.end();
-        return;
-      } else {
-        // if there is no error, compare the oldpassword, if it matches
-        // crypt the new password and store it, else throw error
-        bcrypt.compare(opw, doc[0].hash, function(erro,resu) {
-          if(erro){
-            handleError(res, "BCRYPT ERROR", "Unexpected error.");
+    // check the token
+    isLoggedIn(res, token, function(success, email){
+      if(success){ // if user is logged in:
+        // make sure there are valid
+        if(opw === undefined || npw === undefined || email === undefined){
+          handleError(res, "ERROR user/account/password: invalid data.", "Incorrect data.")
+          res.end();
+          return;
+        }
+        // check if the oldpassword the is correct one
+        mongoFind(res, USERS_COLLECTION, {"_id" : email}, function(err, doc){
+          if(err){
+            // if thre is an error, throwit
+            handleError(res, err.message, "Unexpected error.");
             res.end();
             return;
           } else {
-            // if there is no result
-            if(!resu){
-              handleError(res, "BCRYPT ERROR not result", "Incorrect password.");
-              res.end();
-              return;
-            } else {
-              // if password is ok crypt the newone and save it:
-              // crypt password
-              bcrypt.hash(npw, NSALT, function(error, hash) {
-                if(error){
-                  handleError(res, "Error comparing bcrypt", "Unexpected error.");
+            // if there is no error, compare the oldpassword, if it matches
+            // crypt the new password and store it, else throw error
+            bcrypt.compare(opw, doc[0].hash, function(erro,resu) {
+              if(erro){
+                handleError(res, "BCRYPT ERROR", "Unexpected error.");
+                res.end();
+                return;
+              } else {
+                // if there is no result
+                if(!resu){
+                  handleError(res, "BCRYPT ERROR not result", "Incorrect password.");
                   res.end();
                   return;
-                } // if there is no error set the psw
-                var find = {"_id" : email};
-                var change = {"hash" : hash};
-                mongoUpdate(res, USERS_COLLECTION, find, change, function(err, count){
-                  console.log("MongoUpdate");
-                  if(err){
-                    handleError(res, "DB ERROR: mongoUpdate", "Password not changed, please try again.");
-                    res.end();
-                    return;
-                  } else {
-                    console.log("SUCCESS password changed")
-                    res.status(200).json({"success" : true, "message" : "Password Successfully changed."});
-                    res.end();
-                  }
-                }); //mongo update
-              });// bcrypt 2
-            }// psw match
-          }// psw no error
-        });// bcrypt 1
-      }// user find no error
-    });
+                } else {
+                  // if password is ok crypt the newone and save it:
+                  // crypt password
+                  bcrypt.hash(npw, NSALT, function(error, hash) {
+                    if(error){
+                      handleError(res, "Error comparing bcrypt", "Unexpected error.");
+                      res.end();
+                      return;
+                    } // if there is no error set the psw
+                    var find = {"_id" : email};
+                    var change = {"hash" : hash};
+                    mongoUpdate(res, USERS_COLLECTION, find, change, function(err, count){
+                      console.log("MongoUpdate");
+                      if(err){
+                        handleError(res, "DB ERROR: mongoUpdate", "Password not changed, please try again.");
+                        res.end();
+                        return;
+                      } else {
+                        console.log("SUCCESS password changed")
+                        res.status(200).json({"success" : true, "message" : "Password successfully changed."});
+                        res.end();
+                      }
+                    }); //mongo update
+                  });// bcrypt 2
+                }// psw match
+              }// psw no error
+            });// bcrypt 1
+          }// user find no error
+        });
+      }
+    }) 
  });
 
 // ITEMS API ROUTES BELOW
+
+// GET ALL ITEMS
+
 /*  "/items/all"
  *    GET: finds all items
  */
@@ -559,191 +523,163 @@ app.get("/items/all", function(req, res) {
       }
       res.status(200).json({"success": true, "message": "Items found.", "data": docs});
       res.end();
-      console.log(docs)
     }
   });
 });
+
+// GET ONLY THE USER ITEMS
 
 /*  "/items/:token"
  *    GET: finds items by token
  */
 app.get("/items/:token", function(req, res){
   var token = req.params.token;
-  // check if there is a token, if not throw error
-  if(token === undefined || token == null){
-    handleError(res, "ERROR /items/:token no token", "You are not logged in.");
-    res.end();
-    return;
-  }
-  // if the token exists get the email and search the items with this owner
-  var token = {"token": token};
-  mongoFind(res, UONLINE_COLLECTION, token, function(err, doc){
-    if(err){
-      handleError(res, err.massage, "Unexpected error.");
-      res.end();
+  // check if there is a token
+  isLoggedIn(res, token, function(success, email){
+    if(!success){
       return;
-    } else {
-      // the doc is empty?
-      var email = doc[0]._id;
-      if(email === undefined){
-        handleError(res, "ERROR emailByToken, no data found uonline", "You are not logged in.", 404);
+    }
+    // find the items for this email
+    mongoFind(res, ALLITEMS_COLLECTION, {"owner": email}, function(er, docs){
+      if(er){
+        handleError(res, er.massage, "Unexpected error.");
         res.end();
         return;
       } else {
-        // find the items for this email
-        mongoFind(res, ALLITEMS_COLLECTION, {"owner": email}, function(er, docs){
-          if(er){
-            handleError(res, er.massage, "Unexpected error.");
-            res.end();
-            return;
-          } else {
-            // the docs are empty?
-            if(docs[0] == null || docs[0] === undefined){
-              handleError(res, "ERROR emailByToken, no data found allitems", "You have no items. Add an Item now and start selling!", 404);
-              res.end();
-              return;
-            } else {
-              // send the data
-              res.status(200).json({"success": true, "message": "Items found.", "data": docs});
-              res.end();
-            }// docs found
-          }// else there is no error
-        });// mongo find2
-      }// else email
-    }// else there is no error
-  });// mongo find1
+        // the docs are empty?
+        if(docs[0] == null || docs[0] === undefined){
+          handleError(res, "ERROR emailByToken, no data found allitems", "You have no items. Add an Item now and start selling!", 404);
+          res.end();
+          return;
+        } else {
+          // send the data
+          res.status(200).json({"success": true, "message": "Items found.", "data": docs});
+          res.end();
+        }// docs found
+      }// else there is no error
+    });// mongo find2
+  })
 });
+
+// ADD AN ITEM
+
 /*  "/items"
  *    POST: add an item
  */
 app.post("/items", function(req, res) {
-  var newItem = req.body;
-  //Add the date to the item
+  var newItem = req.body.item;
+  var token = req.body.token;
 
-  if (newItem === undefined || newItem == null) {
-    handleError(res, "Invalid user input", "No data provided.", 400);
-    res.end();
-    return;
-  }
-
-  mongoInsert(res, ALLITEMS_COLLECTION, newItem, function(err, doc) {
-    if(err) {
-      handleError(res, err.message, "Failed to create new item.");
+  // See if user is loggedin
+  isLoggedIn(res, token, function(success, email){
+    if(!success){
+      return;
+    }
+    if (newItem === undefined || newItem == null) {
+      handleError(res, "Invalid user input", "No data provided.", 400);
       res.end();
       return;
-    } else {
-      res.status(201).json({"success": true, "message": "Item successfully added.", "data": doc[0]});
-      res.end();
     }
+    // Ad the email to the item
+    newItem.owner = email;
+
+    mongoInsert(res, ALLITEMS_COLLECTION, newItem, function(err, doc) {
+      if(err) {
+        handleError(res, err.message, "Failed to create new item.");
+        res.end();
+        return;
+      } else {
+        res.status(201).json({"success": true, "message": "Item successfully added.", "data": doc[0]});
+        res.end();
+      }
+    })
   })
 });
+
+// EDIT AN ITEM
+
 /*  "/items/edit"
  *    POST: update an item
  */
 app.post("/items/edit", function(req, res){
-  var item = req.body;
-  // check if the body is valid if not return handle error
-  if(item == null || item === undefined || !item._id){
-    handleError(res, "ERROR /items/edit invalid item", "Item not valid, please, restart the site and try it again.");
-    res.end();
-    return;
-  }
-  // if item is valid then updateit.
-  var id = new mongodb.ObjectID(item._id);
-  var data = item;
-  delete data._id;
-  console.log(id)
-  console.log(data)
-  mongoUpdate(res, ALLITEMS_COLLECTION, {"_id": id}, data, function(err, doc){
-    if(err){
-      handleError(res, "ERROR /items/edit invalid item", "Unexpected error.");
+  var item = req.body.item;
+  var token = req.body.token;
+
+  // check if it's logged in
+  isLoggedIn(res, token, function(success, email){
+    if(!success){
+      return;
+    }
+    // check if the body is valid if not return handle error
+    if(item == null || item === undefined || !item._id){
+      handleError(res, "ERROR /items/edit invalid item", "Item not valid, please, restart the site and try it again.");
       res.end();
       return;
     }
-    // if there is no error, send success
-    console.log("success edit")
-    res.status(200).json({"success": true, "message": "Item succesfully updatet.", "data": doc});
-    res.end();
-    return;
-  })
+    // if item is valid then updateit.
+    var id = new mongodb.ObjectID(item._id);
+    var data = item;
+    delete data._id;
+
+    mongoUpdate(res, ALLITEMS_COLLECTION, {"_id": id}, data, function(err, doc){
+      if(err){
+        handleError(res, "ERROR /items/edit invalid item", "Unexpected error.");
+        res.end();
+        return;
+      }
+      // if there is no error, send success
+      console.log("success edit")
+      res.status(200).json({"success": true, "message": "Item succesfully updatet.", "data": doc});
+      res.end();
+      return;
+    })
+  });
+  
 });
+
+// DELETE AN ITEM
+
 /*  "/items/delete/:token"
- *    DELETE: delete the contact
+ *   DELETE: delete the contact
  */
 app.delete("/items/delete/:token/:item_id", function(req, res){
   var token = req.params.token;
   var item_id = req.params.item_id;
-  console.log(item_id)
-  console.log(token)
-  if(token === undefined || item_id === undefined || token == {} || item_id == {}){
-    handleError(res, "ERROR /items/delete/:token invalid data", "Unexpected error, please, restart the site and try again.",400);
-    res.end();
-    return;
-  } else {
-    // search email by token
-    mongoFind(res, UONLINE_COLLECTION, {"token": token}, function(err, doc){
-      if(err){
-        // if error, thorw error
-        handleError(res, err.message, "Unexpected error, please, restart the site and try again.");
+  
+  // check if it's logged in
+  isLoggedIn(res, token, function(success, email){
+    if(!success){
+      return;
+    }
+    // if it success:
+    // to make sure that the token send is from the owner of the object:
+    var id = new mongodb.ObjectID(item_id);
+    var data = {"_id": id, "owner": email};
+    data._id = id;
+
+    mongoRemove(res, ALLITEMS_COLLECTION, data, function(error, result){
+      if(error){
+        handleError(res, error.message, "Unable to remove the item, please, restart the site and try again.");
         res.end();
-        return
+        return;
       } else {
-        // if success, check if the doc is empty
-        var email = doc[0]._id;
-        if(email === undefined){
-          handleError(res, "ERROR /items/delete/:token not logged in", "You are not logged in.");
-          res.end();
-          return;
-        } else {
-          // if it success:
-          // to make sure that the token send is from the owner of the object:
-          var id = new mongodb.ObjectID(item_id);
-          var data = {"_id": id, "owner": email};
-          data._id = id;
-          console.log(data);
-          mongoRemove(res, ALLITEMS_COLLECTION, data, function(error, result){
-            if(error){
-              handleError(res, error.message, "Unable to remove the item, please, restart the site and try again.");
-              res.end();
-              return;
-            } else {
-              console.log("SUCC");
-              res.status(200).json({"success": true, "message": "Item successfully removed."});
-              res.end();
-            }
-          })
-        }
+        res.status(200).json({"success": true, "message": "Item successfully removed."});
+        res.end();
       }
     })
-  }
+  });
 });
+
+// GET LIKED ITEMS
+
 /*  "/items/liked/:token"
  *    GET: finds items by token
  */
 app.get("/items/liked/:token", function(req, res){
   var token = req.params.token;
   // if token is invalid
-  if (token === undefined || token == {}) {
-    handleError(res, "Invalid user input", "No data provided.", 400);
-    res.end();
-    return;
-  }
-  // if token is valid
-  // search email by token
-  mongoFind(res, UONLINE_COLLECTION, {"token": token}, function(err, doc){
-    if(err){
-      // if error, thorw error
-      handleError(res, err.message, "Unexpected error, please, restart the site and try again.");
-      res.end();
-      return
-    } else {
-      // if success, check if the doc is empty
-      var email = doc[0]._id;
-      if(email === undefined){
-        handleError(res, "ERROR /items/liked/:token not logged in", "You are not logged in.");
-        res.end();
-        return;
-      }
+  isLoggedIn(res, token, function(success, email){
+    if(success){
       // if there is an email search items where likes == to current email
       mongoFind(res, ALLITEMS_COLLECTION, {"likes" : email}, function(er, docs){
         if(er){
@@ -766,9 +702,11 @@ app.get("/items/liked/:token", function(req, res){
       
       });
     }
-  })  
-
+  })
 });
+
+// LIKE AN ITEM
+
 /*  "/items/liked/"
  *    post: update likes
  */
@@ -817,13 +755,12 @@ app.post("/items/like", function(req, res){
             return;
           })
         }
-      });
-      
-      
+      });  
     }
   });//islogedin
-  
 });
+
+// UNLIKE AN ITEM
 
 /*  "/items/liked/:token/:itemid"
  *    DELETE: update likes
@@ -860,11 +797,7 @@ app.post("/items/like", function(req, res){
         res.status(200).json({"success": true, "message": "Item removed from your liked items.", "data": doc});
         res.end();
         return;
-      })
-        
-      
-      
-      
+      })  
     }
   });//islogedin
   

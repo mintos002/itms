@@ -82,7 +82,7 @@
           <label>Owner: <a href="mailto:{{item.owner}}">{{item.owner}}</a></label>
         </div>
         <!-- Conditionally hiden -->
-        <div ng-hide="showDetails === true">
+        <div>
           <h3><i class="glyphicon glyphicon-tag"></i> {{item.price | currency}}</h3>
           <h4> {{item.title}} 
               <span class="label label-primary label-sm">{{item.type}}</span>
@@ -116,7 +116,7 @@
             <p><h4>{{item.description}}</h4></p>
         </div>
 
-        <pre class="listing-form-row">{{item | json}}</pre>
+        <!-- <pre class="listing-form-row">{{item | json}}</pre> -->
 
       </div>
     </div>
